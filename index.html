@@ -1478,6 +1478,17 @@ function cerrarDrawer(){
   if(!document.getElementById('overlay').classList.contains('open'))document.body.style.overflow='';
 }
 function irAFinalizar(){cerrarDrawer();showView('carrito');}
+// Miniatura del carrito: la del modelo elegido (si hay foto de ese modelo); si no, la genérica del producto
+function itemThumb(i){
+  const k=i.prodId+'|'+(i.modelo||'');
+  let f='';
+  if(i.modelo){
+    if(k in PHOTO_URL)f=PHOTO_THUMB[k]||PHOTO_URL[k]||'';
+    else resolverFoto(i.prodId,i.modelo).then(()=>{try{if(document.getElementById('drw').classList.contains('open'))renderDrawer();if(document.getElementById('view-carrito').classList.contains('on'))renderCarrito();}catch(e){}});
+  }
+  f=f||FOTOS_COMBOS[i.prodId]||'';
+  return f?`<img src="${BASE_URL}${f}" alt="${String(i.modelo||'').replace(/[<>"`]/g,'')}">`:i.emoji;
+}
 function renderDrawer(){
   const body=document.getElementById('drw-body'),foot=document.getElementById('drw-foot');
   if(!carrito.length){
@@ -1486,7 +1497,7 @@ function renderDrawer(){
   }
   const sub=carrito.reduce((s,i)=>s+i.precio,0);
   body.innerHTML=carrito.map(i=>`<div class="drw-item">
-    <div class="drw-thumb">${FOTOS_COMBOS[i.prodId]?`<img src="${BASE_URL}${FOTOS_COMBOS[i.prodId]}" alt="">`:i.emoji}</div>
+    <div class="drw-thumb">${itemThumb(i)}</div>
     <div class="drw-info">
       <div class="drw-name">${i.foto?'📷 ':''}${i.bordado?`<strong>${i.bordado}</strong> · `:''}${i.nombre}${i.modelo?' — '+i.modelo:''}${i.bordadoCollar?` <small>(collar: <b>${String(i.bordadoCollar).replace(/[<>"`]/g,'')}</b>)</small>`:''}</div>
       <div class="drw-det">${detItem(i)}</div>
@@ -1525,7 +1536,7 @@ function renderCarrito(){
   if(!carrito.length){list.innerHTML='';empty.style.display='block';bot.style.display='none';return;}
   empty.style.display='none';bot.style.display='block';
   list.innerHTML=carrito.map(i=>`<div class="cart-item-card">
-    <div class="cart-item-icon">${FOTOS_COMBOS[i.prodId]?`<img src="${BASE_URL}${FOTOS_COMBOS[i.prodId]}" alt="">`:i.emoji}</div>
+    <div class="cart-item-icon">${itemThumb(i)}</div>
     <div class="cart-item-info">
       <div class="cart-item-name">${i.bordado?`<strong>${i.bordado}</strong> · `:''}${i.nombre}${i.modelo?' — '+i.modelo:''}${i.bordadoCollar?` <small>(collar: <b>${String(i.bordadoCollar).replace(/[<>"`]/g,'')}</b>)</small>`:''}</div>
       <div class="cart-item-detail">${detItem(i)}</div>
