@@ -1397,22 +1397,46 @@ const SHOP_LINK='https://mambomascotas.github.io/mambo/';
 function codNorm(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,30);}
 function codUsos(cod){return pedidos.filter(p=>codNorm(p.codigo)===codNorm(cod)&&p.pagoEstado!=='rechazado').length;}
 function codigoFila(c,i){
-  const inp='border:1.5px solid var(--gray2);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;font-weight:700';
+  const inp='width:auto;border:1.5px solid var(--gray2);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;font-weight:700;background:#fff';
   const u=c.codigo?codUsos(c.codigo):0;
-  return `<div style="display:grid;grid-template-columns:minmax(120px,1.4fr) 70px minmax(120px,1fr) 140px auto;gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--gray2)">
-    <input style="${inp};text-transform:uppercase" value="${c.codigo||''}" placeholder="CODIGO" maxlength="30" oninput="codigoSet(${i},'codigo',codNorm(this.value));this.value=codNorm(this.value)">
-    <div style="display:flex;align-items:center;gap:3px"><input type="number" min="1" max="90" style="${inp};width:54px" value="${c.pct||''}" placeholder="10" oninput="codigoSet(${i},'pct',+this.value)">%</div>
-    <select style="${inp}" onchange="codigoSet(${i},'medio',this.value)"><option value="todos"${(c.medio||'todos')==='todos'?' selected':''}>Cualquier medio</option><option value="transf"${c.medio==='transf'?' selected':''}>Solo transferencia</option><option value="mp"${c.medio==='mp'?' selected':''}>Solo Mercado Pago</option></select>
-    <input type="date" style="${inp}" value="${c.hasta||''}" title="Vence (vacío = sin vencimiento)" onchange="codigoSet(${i},'hasta',this.value)">
-    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-      <label style="font-size:12px;font-weight:800"><input type="checkbox" style="width:18px;height:18px;vertical-align:middle;accent-color:var(--pink-dark)" ${c.activo!==false?'checked':''} onchange="codigoSet(${i},'activo',this.checked)"> Activo</label>
+  const fijo=!!c.fijoT||c.tipo==='fijo';
+  const prods=Object.keys(preciosData).filter(k=>!/^(Env[ií]o|Identificaci)/.test(k));
+  const chip=(arr,v,fn)=>{const on=(arr||[]).includes(v);return `<button type="button" onclick="${fn}" style="width:auto;border:1.5px solid ${on?'var(--pink-dark)':'var(--gray2)'};background:${on?'var(--pink-dark)':'#fff'};color:${on?'#fff':'#111'};border-radius:14px;padding:3px 10px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit">${v}</button>`;};
+  const quien=((c.productos||[]).length||(c.modelos||[]).length)
+    ?`Aplica solo a: <b>${(c.productos||[]).length?c.productos.join(' / '):'todos los productos'}</b>${(c.modelos||[]).length?' · modelos <b>'+c.modelos.join(', ')+'</b>':''}`
+    :'Aplica a <b>todo el carrito</b>';
+  return `<div style="border:1.5px solid var(--gray2);border-radius:12px;padding:12px;margin-top:10px;background:${c.activo===false?'#f5f5f5':'#fff'}">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input style="${inp};text-transform:uppercase;flex:1;min-width:140px;font-size:15px;width:100%" value="${c.codigo||''}" placeholder="CODIGO" maxlength="30" oninput="codigoSet(${i},'codigo',codNorm(this.value));this.value=codNorm(this.value)">
+      <label style="font-size:12px;font-weight:800;white-space:nowrap"><input type="checkbox" style="width:18px;height:18px;vertical-align:middle;accent-color:var(--pink-dark);-webkit-appearance:checkbox;appearance:auto;padding:0" ${c.activo!==false?'checked':''} onchange="codigoSet(${i},'activo',this.checked)"> Activo</label>
       <span style="font-size:11px;color:var(--gray3);white-space:nowrap">${u} uso${u===1?'':'s'}</span>
       <button class="btn" style="width:auto;padding:4px 9px;font-size:11px;background:#fff;color:#111;border:1.5px solid var(--gray2)" onclick="codigoLink(${i})">🔗 Link</button>
       <button class="btn" style="width:auto;padding:4px 9px;font-size:11px;background:#fff;color:#dc2626;border:1.5px solid #fca5a5" onclick="codigoBorrar(${i})">✕</button>
-    </div></div>`;
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <select style="${inp}" onchange="codigoTipo(${i},this.value)"><option value="pct"${fijo?'':' selected'}>% de descuento</option><option value="fijo"${fijo?' selected':''}>Precio promo fijo</option></select>
+      ${fijo
+        ?`<label style="font-size:12px;font-weight:700">Transferencia $<input type="number" min="1" style="${inp};width:96px" value="${c.fijoT||''}" placeholder="34990" oninput="codigoSet(${i},'fijoT',+this.value)"></label>
+           <label style="font-size:12px;font-weight:700">Mercado Pago $<input type="number" min="1" style="${inp};width:96px" value="${c.fijoMP||''}" placeholder="auto" oninput="codigoSet(${i},'fijoMP',+this.value)"></label>
+           <span style="font-size:11px;color:var(--gray3)">MP vacío = mismo % de rebaja que la transferencia</span>`
+        :`<label style="font-size:12px;font-weight:700"><input type="number" min="1" max="90" style="${inp};width:64px" value="${c.pct||''}" placeholder="10" oninput="codigoSet(${i},'pct',+this.value)"> %</label>`}
+      <select style="${inp}" onchange="codigoSet(${i},'medio',this.value)"><option value="todos"${(c.medio||'todos')==='todos'?' selected':''}>Cualquier medio de pago</option><option value="transf"${c.medio==='transf'?' selected':''}>Solo transferencia</option><option value="mp"${c.medio==='mp'?' selected':''}>Solo Mercado Pago</option></select>
+      <label style="font-size:12px;font-weight:700">Vence <input type="date" style="${inp}" value="${c.hasta||''}" onchange="codigoSet(${i},'hasta',this.value)"></label>
+    </div>
+    <details style="margin-top:10px" ${((c.productos||[]).length||(c.modelos||[]).length||fijo)?'open':''}>
+      <summary style="cursor:pointer;font-size:12px;font-weight:800">Limitar a productos / modelos <span style="font-weight:600;color:var(--gray3)">(opcional)</span></summary>
+      <div style="font-size:11px;color:var(--gray3);margin:8px 0 4px">Productos (sin marcar = todos):</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${prods.map(k=>chip(c.productos,k,`codigoToggle(${i},'productos',${JSON.stringify(k).replace(/"/g,'&quot;')})`)).join('')}</div>
+      <div style="font-size:11px;color:var(--gray3);margin:10px 0 4px">Modelos / colores (sin marcar = todos):</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${MODELOS.map(k=>chip(c.modelos,k,`codigoToggle(${i},'modelos',${JSON.stringify(k).replace(/"/g,'&quot;')})`)).join('')}</div>
+    </details>
+    <div style="font-size:12px;margin-top:10px;color:#444">${quien}${c.hasta?' · vence el '+c.hasta.split('-').reverse().join('/'):''}</div>
+  </div>`;
 }
+function codigoTipo(i,t){const c=codigosData.lista[i];if(!c)return;if(t==='fijo'){c.tipo='fijo';c.pct=0;}else{c.tipo='pct';c.fijoT=0;c.fijoMP=0;if(!c.pct)c.pct=10;}rPrecios();}
+function codigoToggle(i,k,v){const c=codigosData.lista[i];if(!c)return;c[k]=c[k]||[];const j=c[k].indexOf(v);if(j>=0)c[k].splice(j,1);else c[k].push(v);rPrecios();}
 function codigoSet(i,k,v){if(codigosData.lista[i])codigosData.lista[i][k]=v;}
-function codigoNuevo(){codigosData.lista.push({codigo:'',pct:10,medio:'todos',hasta:'',activo:true});rPrecios();}
+function codigoNuevo(){codigosData.lista.push({codigo:'',tipo:'pct',pct:10,medio:'todos',hasta:'',activo:true,productos:[],modelos:[]});rPrecios();}
 function codigoBorrar(i){if(!confirm('¿Borrar este código?'))return;codigosData.lista.splice(i,1);rPrecios();saveCodigos(true);}
 function codigoLink(i){
   const c=codigosData.lista[i];if(!c||!c.codigo){toast('Escribí el código primero');return;}
@@ -1422,7 +1446,15 @@ function codigoLink(i){
 async function saveCodigos(silencioso){
   const l=codigosData.lista.filter(c=>codNorm(c.codigo));
   const vistos=new Set();
-  for(const c of l){c.codigo=codNorm(c.codigo);c.pct=Math.min(90,Math.max(1,Math.round(+c.pct||0)));if(vistos.has(c.codigo)){toast('⚠️ Código repetido: '+c.codigo);return;}vistos.add(c.codigo);}
+  for(const c of l){
+    c.codigo=codNorm(c.codigo);
+    if(vistos.has(c.codigo)){toast('⚠️ Código repetido: '+c.codigo);return;}vistos.add(c.codigo);
+    c.productos=c.productos||[];c.modelos=c.modelos||[];
+    if(c.tipo==='fijo'||c.fijoT){
+      c.fijoT=Math.round(+c.fijoT||0);c.fijoMP=Math.round(+c.fijoMP||0);c.pct=0;
+      if(!c.fijoT||!c.productos.length){toast('⚠️ '+c.codigo+': el precio fijo necesita un precio y al menos un producto marcado');return;}
+    }else{c.pct=Math.min(90,Math.max(1,Math.round(+c.pct||0)));}
+  }
   codigosData.lista=l;
   try{
     const r=await fetch(`${SUPA_URL}/rest/v1/faltantes`,{method:'POST',headers:{...supaHeaders,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({id:'mambo_codigos',data:codigosData})});

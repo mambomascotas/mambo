@@ -1538,7 +1538,8 @@ function renderCarrito(){
 
 function renderTotal(){
   const sub=subRaw(),dsc=descTransf();const total=sub-dsc+envioCosto;
-  const dr=document.getElementById('desc-row');if(dr){dr.style.display=dsc>0?'flex':'none';document.getElementById('desc-lbl').textContent='Código '+(cupon?cupon.codigo:'')+' (−'+(cupon?cupon.pct:0)+'%)';document.getElementById('desc-val').textContent='−'+fmt(dsc);}
+  const dr=document.getElementById('desc-row');if(dr){dr.style.display=dsc>0?'flex':'none';document.getElementById('desc-lbl').textContent='Código '+(cupon?cupon.codigo:'')+(cupon&&!cupon.fijoT?' (−'+cupon.pct+'%)':'');
+  if(cupon&&carrito.length&&!carrito.some(cupMatch))cuponUI(false,'⚠️ El código es válido, pero tu carrito no incluye productos de esta promo: '+cuponDesc()+'.');else if(cupon)cuponUI(true,'✅ Código aplicado: '+cuponDesc()+'.');document.getElementById('desc-val').textContent='−'+fmt(dsc);}
   document.getElementById('subtotal-val').textContent=fmt(sub);
   document.getElementById('envio-val').textContent=envioCosto>0?fmt(envioCosto):(envioTipo==='moto'||envioTipo==='motogba'?'A coordinar':'Gratis');
   document.getElementById('total-val').textContent=fmt(total);
@@ -1631,7 +1632,7 @@ function irAPago(){
   const eL={sucursal:'Correo Sucursal',domicilio:'Correo Domicilio',urquiza:'Retiro Urquiza',moto:'Motito CABA',motogba:'Motito GBA'};
   document.getElementById('pago-resumen-items').innerHTML=
     carrito.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${i.bordado?String(i.bordado).replace(/[<>"`]/g,'')+' · ':''}${i.nombre}${i.modelo?' — '+i.modelo:''}</span><span style="font-weight:700">${fmt(i.precio)}</span></div>`).join('')+
-    (descTransf()>0?`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;color:#15803d;font-weight:700"><span>Código ${cupon.codigo} (−${cupon.pct}%)</span><span>−${fmt(descTransf())}</span></div>`:'')+
+    (descTransf()>0?`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;color:#15803d;font-weight:700"><span>Código ${cupon.codigo}${cupon.fijoT?'':' (−'+cupon.pct+'%)'}</span><span>−${fmt(descTransf())}</span></div>`:'')+
     `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray3)"><span>Envío — ${eL[envioTipo]||envioTipo}</span><span>${envioCosto>0?fmt(envioCosto):'Gratis'}</span></div>`;
   document.getElementById('pago-total').textContent=fmt(total);
   document.getElementById('alias-show').textContent=ALIAS;
@@ -1644,10 +1645,32 @@ let metodoPago='transf';
 // ── Código de descuento (se valida en el servidor; Mercado Pago lo vuelve a aplicar ahí) ──
 let cupon=null;   // {codigo,pct,medio:'todos'|'transf'|'mp'}
 const subRaw=()=>carrito.reduce((s,i)=>s+i.precio,0);
-function descTransf(){return cupon&&cupon.medio!=='mp'?Math.round(subRaw()*cupon.pct/100):0;}
+const cupRestr=()=>!!(cupon&&((cupon.productos||[]).length||(cupon.modelos||[]).length));
+const cupMatch=i=>!!cupon&&(!(cupon.productos||[]).length||cupon.productos.includes(i.pk))&&(!(cupon.modelos||[]).length||cupon.modelos.includes(i.modelo));
+function descItemT(i){
+  if(!cupon||!cupMatch(i))return 0;
+  if(cupon.fijoT)return (i.pdiv||1)===1?Math.max(0,i.precio-cupon.fijoT):0;
+  return Math.round(i.precio*cupon.pct/100);
+}
+function descTransf(){return cupon&&cupon.medio!=='mp'?carrito.reduce((s,i)=>s+descItemT(i),0):0;}
 function subT(){return subRaw()-descTransf();}                       // subtotal con promo transferencia ya descontado
-function mpU(u){return cupon&&cupon.medio!=='transf'?Math.round(u*(100-cupon.pct)/100):u;}
-function totalMP(){return carrito.reduce((s,i)=>s+mpU(Math.round(((precios[i.pk]||{}).mp||0)/(i.pdiv||1)))+(i.extra?mpU((precios[i.extra]||{}).mp||0):0),0);}
+function mpPk(i){
+  const p=precios[i.pk]||{},base=Math.round((p.mp||0)/(i.pdiv||1));
+  if(!cupon||cupon.medio==='transf'||!cupMatch(i))return base;
+  if(cupon.fijoT)return (i.pdiv||1)===1?Math.min(base,cupon.fijoMP||Math.round(base*cupon.fijoT/(p.transf>0?p.transf:base))):base;
+  return Math.round(base*(100-cupon.pct)/100);
+}
+function mpEx(i){
+  const b=i.extra?((precios[i.extra]||{}).mp||0):0;
+  return(!cupon||cupon.medio==='transf'||cupRestr()||cupon.fijoT)?b:Math.round(b*(100-cupon.pct)/100);
+}
+function totalMP(){return carrito.reduce((s,i)=>s+mpPk(i)+mpEx(i),0);}
+function cuponDesc(){
+  if(!cupon)return'';
+  const q=[];if((cupon.productos||[]).length)q.push(cupon.productos.join(' / '));if((cupon.modelos||[]).length)q.push('modelos '+cupon.modelos.join(', '));
+  const m=cupon.medio==='transf'?' (pagando por transferencia)':cupon.medio==='mp'?' (pagando con Mercado Pago)':'';
+  return(cupon.fijoT?'Precio promo '+fmt(cupon.fijoT)+' por unidad':cupon.pct+'% de descuento')+(q.length?' en '+q.join(' · '):'')+m;
+}
 function cuponUI(ok,txt){const m=document.getElementById('cupon-msg');if(m){m.className='cupon-msg '+(ok===true?'ok':ok===false?'bad':'');m.textContent=txt||'';}}
 async function aplicarCodigo(desdeLink){
   const inp=document.getElementById('cupon-in'),btn=document.getElementById('cupon-btn');if(!inp)return;
@@ -1659,8 +1682,8 @@ async function aplicarCodigo(desdeLink){
     const r=await fetch(MP_FN,{method:'POST',headers:SUPA_H,body:JSON.stringify({accion:'codigo',codigo:c})});
     const d=await r.json().catch(()=>({}));
     if(r.ok&&d.ok){
-      cupon={codigo:d.codigo,pct:d.pct,medio:d.medio||'todos'};inp.value=d.codigo;inp.disabled=true;btn.textContent='Quitar';
-      cuponUI(true,'✅ Código aplicado: '+d.pct+'% de descuento'+(cupon.medio==='transf'?' pagando por transferencia':cupon.medio==='mp'?' pagando con Mercado Pago':'')+'.');
+      cupon={codigo:d.codigo,pct:d.pct||0,medio:d.medio||'todos',productos:d.productos||[],modelos:d.modelos||[],fijoT:d.fijoT||0,fijoMP:d.fijoMP||0};inp.value=d.codigo;inp.disabled=true;btn.textContent='Quitar';
+      cuponUI(true,'✅ Código aplicado: '+cuponDesc()+'.');
       if(desdeLink===true)toast('🏷️ Código '+d.codigo+' aplicado',3000);
     }else cuponUI(false,'❌ '+(d.msg||'Ese código no existe o ya venció.'));
   }catch(e){cuponUI(false,'No pudimos verificar el código ahora. Probá de nuevo en un momento.');}
@@ -1685,7 +1708,7 @@ function renderMetodos(){
 const ENVIO_GESTION={sucursal:'Correo Arg Sucursal',domicilio:'Correo Arg Domicilio',urquiza:'Retira Urquiza',moto:'Motito CABA',motogba:'Motito GBA'};
 function notasPedido(){
   const l=['Pedido desde la web'];
-  if(cupon)l.push('🏷️ CÓDIGO '+cupon.codigo+' (−'+cupon.pct+'%'+(cupon.medio==='transf'?', solo transferencia':cupon.medio==='mp'?', solo Mercado Pago':'')+')'+(descTransf()>0?' −'+fmt(descTransf())+' en el total por transferencia':''));
+  if(cupon)l.push('🏷️ CÓDIGO '+cupon.codigo+' ('+cuponDesc()+')'+(descTransf()>0?' −'+fmt(descTransf())+' en el total por transferencia':''));
   if(envioTipo==='sucursal'||envioTipo==='domicilio'){const d=datosEnvioTxt();l.push(d?'Datos de envío: '+d:'Datos de envío: los manda por WhatsApp');}
   if(carrito.some(i=>i.conArnes&&!i.talle))l.push('Talle a confirmar por WhatsApp');
   if(carrito.some(i=>i.foto))l.push('📷 Subió foto del perro para el bordado');
