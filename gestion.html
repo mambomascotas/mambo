@@ -1057,6 +1057,7 @@ hr{border:none;border-top:1px solid var(--gray2);margin:12px 0}
 // ══════════ DATA ══════════
 const SUPA_URL = 'https://fllkkrgsibuizxoerkel.supabase.co';
 // Foto de perro subida desde el shop: solo se acepta una URL de nuestro bucket (evita enlaces ajenos)
+function fotoCollarUrl(i){const u=String((i&&i.fotoUrlCollar)||'');return u.startsWith(SUPA_URL+'/storage/v1/object/public/fotos-perros/')&&/^[A-Za-z0-9:\/._-]+$/.test(u)?u:'';}
 function fotoPerroUrl(i){const u=String((i&&i.fotoUrl)||'');return u.startsWith(SUPA_URL+'/storage/v1/object/public/fotos-perros/')&&/^[A-Za-z0-9:\/._-]+$/.test(u)?u:'';}
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsbGtrcmdzaWJ1aXp4b2Vya2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTQwMDgsImV4cCI6MjA4OTk3MDAwOH0.5JoH8xyx6iroGpM5cMKn4_RaCvbuN29TDVQEkld4l4o';
 
@@ -1623,7 +1624,7 @@ function rTareas(){
 
   const rot=act.filter(p=>(p.envio==='Correo Arg Sucursal'||p.envio==='Correo Arg Domicilio')&&!p.rotuloHecho);
   const bord=[];
-  act.forEach(p=>p.items.forEach(i=>{if(i.bordado&&i.bordado.trim()&&!i.bordadoOk)bord.push('#'+p.num+' '+i.bordado.trim());}));
+  act.forEach(p=>p.items.forEach(i=>{if(i.bordado&&i.bordado.trim()&&!i.bordadoOk)bord.push('#'+p.num+' '+i.bordado.trim());if((i.bordadoCollar||'').trim()&&!i.bordadoCollarOk)bord.push('#'+p.num+' collar '+i.bordadoCollar.trim());}));
   const accPend=act.filter(p=>p.items.some(i=>['pendiente','prep','prio','prep_prio','no'].includes(i.accesorios||'')&&i.estadoItem!=='enviado'));
   const nuevos=act.filter(p=>p.estado==='nuevo');
   const listos=act.filter(p=>p.estado==='listo');
@@ -1971,7 +1972,7 @@ function rTabla(){
               html += `<td rowspan="${nItems}" style="background:${rowBg};${borderTop};font-size:12px;vertical-align:middle;border-right:1px solid #e5e7eb">${p.cliente||''}</td>`;
             }
 
-            html += td(`<div style="font-weight:800;font-size:13px;color:${item.bordadoOk?'var(--pink-dark)':'#111'}">${item.bordado||item.alias||'—'}</div>`);
+            html += td(`<div style="font-weight:800;font-size:13px;color:${item.bordadoOk?'var(--pink-dark)':'#111'}">${item.bordado||item.alias||'—'}</div>${(item.bordadoCollar||'').trim()?`<div style="font-size:11px;font-weight:800;color:#6d28d9;margin-top:2px">🐾 Collar: ${item.bordadoCollar}${item.collarIgual?' <span style=\"font-weight:600;color:#6b7280\">(igual al arnés)</span>':''}</div>`:''}`);
             html += td(prod, 'max-width:200px');
             html += td(item.pecho||'—','text-align:center;font-size:12px');
             html += td(item.cuello||'—','text-align:center;font-size:12px');
@@ -3979,8 +3980,12 @@ function renderIL(){
     if(i.cuello)ex.push('Cuello '+i.cuello+'cm');
     if(i.colorCorrea)ex.push('Correa '+i.colorCorrea);
     if(i.mosq)ex.push('Mosq. '+i.mosq);
-    if(i.bordadoCollar)ex.push('🧵 ID collar: '+i.bordadoCollar);
-    if(fotoPerroUrl(i))ex.push('<a href="'+fotoPerroUrl(i)+'" target="_blank" rel="noopener" style="color:var(--pink-dark);font-weight:800">📷 foto del perro</a>');
+    const lnkF=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--pink-dark);font-weight:800">'+t+'</a>';
+    const hayCollarId=!!i.bordadoCollar;
+    if(hayCollarId)ex.push('<span style="background:#fde8f3;border-radius:6px;padding:1px 6px;font-weight:800">🧵 ID COLLAR: '+i.bordadoCollar+(i.collarIgual?' (mismos datos que el arnés)':'')+'</span>');
+    if(fotoPerroUrl(i))ex.push(lnkF(fotoPerroUrl(i),hayCollarId?'📷 foto del ARNÉS':'📷 foto del perro'));
+    if(hayCollarId&&fotoCollarUrl(i)&&!(i.collarIgual&&fotoCollarUrl(i)===fotoPerroUrl(i)))ex.push(lnkF(fotoCollarUrl(i),'📷 foto del COLLAR'));
+    else if(hayCollarId&&i.collarIgual&&fotoPerroUrl(i))ex.push('<span style="color:#6b7280">(misma foto para el collar)</span>');
     if(i.cuelloAConfirmar)ex.push('Cuello a confirmar');
     const combx2badge=i.esCombx2?`<span style="background:var(--pink);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:10px;margin-right:4px">x2</span>`:'';
     return `<div class="ir">
@@ -4659,21 +4664,22 @@ function bordProducir(){
   pushHistory();
   const tocados=new Set();
   bordSel.forEach(k=>{
-    const [pid,iid]=k.split('|');
+    const [pid,iid0]=k.split('|');const esC=iid0.endsWith('~c'),iid=esC?iid0.slice(0,-2):iid0;
     const p=pedidos.find(x=>x.id===pid);if(!p)return;
     const it=p.items.find(x=>x.id===iid);if(!it)return;
-    it.bordadoOk=true;tocados.add(p);
+    if(esC)it.bordadoCollarOk=true;else it.bordadoOk=true;tocados.add(p);
   });
   const n=bordSel.size;bordSel=new Set();
   tocados.forEach(p=>saveOnePedido(p));
   renderAll();
   toast(`🪡 ${n} bordado${n!==1?'s':''} producido${n!==1?'s':''}`);
 }
-function bordDeshacer(pid,iid){
+function bordDeshacer(pid,iid0){
+  const esC=String(iid0).endsWith('~c'),iid=esC?String(iid0).slice(0,-2):iid0;
   const p=pedidos.find(x=>x.id===pid);if(!p)return;
   const it=p.items.find(x=>x.id===iid);if(!it)return;
   pushHistory();
-  it.bordadoOk=false;
+  if(esC)it.bordadoCollarOk=false;else it.bordadoOk=false;
   saveOnePedido(p);renderAll();
   toast('↩ Vuelto a pendientes');
 }
@@ -4687,8 +4693,26 @@ function rBordados(){
   const rows=[];
   filtPed.forEach(p=>{
     p.items.forEach(i=>{
+      const conCollarId=!!(i.bordadoCollar&&i.bordadoCollar.trim());
+      if(conCollarId){
+        rows.push({
+          foto: fotoCollarUrl(i)||(i.collarIgual?fotoPerroUrl(i):''),
+          key:p.id+'|'+i.id+'~c',
+          pid:p.id, iid:i.id+'~c',
+          num:p.num,
+          nombre:i.bordadoCollar.trim().toUpperCase(),
+          tag:'COLLAR', igual:!!i.collarIgual,
+          producto:i.tipo.replace('Combo 1 — Arnés + Correa','Combo 1').replace('Combo 2 — Arnés + Correa + Collar','Combo 2'),
+          modelo:i.modelo||'',
+          talle:'—',
+          estado:p.estado,
+          esCollarSub:false,
+          ok: !!i.bordadoCollarOk,
+        });
+      }
       if((i.bordado&&i.bordado.trim())||fotoPerroUrl(i)){
         rows.push({
+          tag: conCollarId?'ARNÉS':(i.tipo==='Collar'?'COLLAR':''),
           foto: fotoPerroUrl(i),
           key:p.id+'|'+i.id,
           pid:p.id, iid:i.id,
@@ -4744,7 +4768,7 @@ function rBordados(){
           return `<tr>
             <td><input type="checkbox" ${bordSel.has(r.key)?'checked':''} onchange="bordToggleSel('${r.key}',this)" style="width:20px;height:20px;cursor:pointer;accent-color:var(--pink-dark)"></td>
             <td style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--pink-dark)">#${r.num}</td>
-            <td><div class="bord-name">${r.nombre}</div>${r.foto?`<a href="${r.foto}" target="_blank" rel="noopener" style="font-size:12px;font-weight:800;color:var(--pink-dark)">📷 ver foto</a>`:''}</td>
+            <td>${r.tag?`<span style="display:inline-block;background:${r.tag==='COLLAR'?'#ede9fe':'#fde8f3'};color:${r.tag==='COLLAR'?'#6d28d9':'var(--pink-dark)'};font-size:10px;font-weight:800;padding:1px 7px;border-radius:8px;margin-bottom:2px">${r.tag==='COLLAR'?'🐾 BORDADO DEL COLLAR':'🦮 BORDADO DEL ARNÉS'}</span><br>`:''}<div class="bord-name">${r.nombre}</div>${r.igual?`<div style="font-size:11px;color:#6b7280">mismos datos que el arnés</div>`:''}${r.foto?`<a href="${r.foto}" target="_blank" rel="noopener" style="font-size:12px;font-weight:800;color:var(--pink-dark)">📷 ver foto${r.tag?' del '+r.tag.toLowerCase():''}</a>`:''}</td>
             <td><div style="font-size:13px;font-weight:700">${r.producto}${r.modelo?' — '+r.modelo:''}</div></td>
             <td><span class="pt-talle">${r.talle||'—'}</span></td>
             <td><span class="badge ${estObj.c}">${estObj.e} ${estObj.l}</span></td>
@@ -4759,7 +4783,7 @@ function rBordados(){
       <tbody>
         ${hechos.map(r=>`<tr>
           <td style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--pink-dark)">#${r.num}</td>
-          <td><div class="bord-name" style="color:var(--pink-dark)">${r.nombre}</div>${r.foto?`<a href="${r.foto}" target="_blank" rel="noopener" style="font-size:12px;font-weight:800;color:var(--pink-dark)">📷 ver foto</a>`:''}</td>
+          <td>${r.tag?`<span style="display:inline-block;background:${r.tag==='COLLAR'?'#ede9fe':'#fde8f3'};color:${r.tag==='COLLAR'?'#6d28d9':'var(--pink-dark)'};font-size:10px;font-weight:800;padding:1px 7px;border-radius:8px;margin-bottom:2px">${r.tag==='COLLAR'?'🐾 BORDADO DEL COLLAR':'🦮 BORDADO DEL ARNÉS'}</span><br>`:''}<div class="bord-name" style="color:var(--pink-dark)">${r.nombre}</div>${r.foto?`<a href="${r.foto}" target="_blank" rel="noopener" style="font-size:12px;font-weight:800;color:var(--pink-dark)">📷 ver foto${r.tag?' del '+r.tag.toLowerCase():''}</a>`:''}</td>
           <td><div style="font-size:13px;font-weight:700">${r.producto}${r.modelo?' — '+r.modelo:''}</div></td>
           <td><span class="pt-talle">${r.talle||'—'}</span></td>
           <td style="text-align:right"><button onclick="bordDeshacer('${r.pid}','${r.iid}')" title="Volver a pendientes" style="background:#fff;border:1.5px solid #9ca3af;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:800;cursor:pointer;color:#374151">↩ Pendiente</button></td>

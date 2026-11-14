@@ -357,7 +357,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .m-head .modal-price{font-size:22px;margin:0}
 .m-head .modal-price-mp{margin:0;font-size:11px}
 .modal-desc{font-size:13px;margin:4px 0 8px}
-.m-body{overflow-y:auto;flex:1;min-height:0;padding-bottom:6px}
+.m-body{overflow-x:hidden;overflow-y:auto;flex:1;min-height:0;padding-bottom:6px}
 .m-cta{position:static;margin:0 -16px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--gray2)}
 .modal-inner{padding-top:4px}
 .mod-grid{display:flex;gap:6px;overflow-x:auto;margin-top:4px;padding-bottom:4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
@@ -370,7 +370,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .mt span{position:absolute;left:0;right:0;bottom:0;padding:9px 2px 2px;text-align:center;font-size:9.5px;font-weight:700;line-height:1.1;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 .mod-sel{display:inline;font-size:12px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--gray3)}
 .mod-sel.ok{color:var(--rose);font-weight:800}
-.m-sec{background:#fdf1f6;border:1.5px solid #f6d3e2;border-radius:14px;padding:12px 13px 4px;margin-bottom:12px}
+.m-sec{min-width:0;background:#fdf1f6;border:1.5px solid #f6d3e2;border-radius:14px;padding:12px 13px 4px;margin-bottom:12px}
 .m-sec-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#111;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid #f6d3e2}
 .m-sec-h i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--rose);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;letter-spacing:0}
 .m-sec-h small{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:none;color:var(--rose)}
@@ -393,8 +393,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
   .m-head .modal-name{font-size:26px}
   .m-head .modal-price{font-size:28px}
   .modal-desc{font-size:13.5px}
-  .mod-grid{display:grid;grid-template-columns:repeat(8,1fr);overflow:visible;gap:6px;margin-top:6px}
-  .is-x2 .mod-grid{grid-template-columns:repeat(10,1fr);gap:4px}
+  .mod-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));overflow:visible;gap:6px;margin-top:6px}
+  .is-x2 .mod-grid{grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
   .mt{width:auto}
   .is-x2 .mt span{font-size:8px}
   .m-cta{margin:0 -24px;padding:12px 24px 18px}
@@ -424,7 +424,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .ed-opt{text-align:left;border:1.5px solid var(--gray2);background:#fff;border-radius:12px;padding:11px 13px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .ed-opt b{display:block;font-size:14px;color:var(--text)}.ed-opt span{font-size:12px;color:var(--gray3)}
 .ed-opt.on{border-color:var(--rose);background:var(--rose-light)}
-@media(min-width:900px){.m-grid{height:min(92vh,800px)}.mt{width:auto}.mod-grid{grid-template-columns:repeat(10,1fr);gap:5px}.modal-desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.m-head .modal-name{font-size:23px}.modal-cap b{font-size:24px}}
+@media(min-width:900px){.m-grid{height:min(92vh,800px)}.mt{width:auto}.mod-grid{grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}.modal-desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.m-head .modal-name{font-size:23px}.modal-cap b{font-size:24px}}
 @media(max-width:899px){.modal-desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.modal-cap b{font-size:17px}.modal-cap{top:8px;padding:5px 16px}}
 .lbl-inc{float:right;background:var(--rose-light);color:var(--rose);font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
 .bord-hint{font-size:12px;color:var(--gray3);margin-bottom:6px;line-height:1.4}.bord-hint strong{color:var(--text)}
@@ -1165,9 +1165,19 @@ function renderSingle(c,hasMod,hasColor,hasBord,secArn,secAcc){
 
 function exIdC(){return precios['Identificación collar']||PRECIOS_DEFAULT['Identificación collar'];}
 function bordOpc(c){
-  const e=exIdC();
+  const e=exIdC();const conArnes=c.id!=='collar';
+  const foto=FOTO_ACTIVA?`<div class="foto-box" style="padding:8px 10px;margin-bottom:8px"><div class="foto-info"><b>¿Querés la carita de tu perri en el collar?</b><span>Subí su foto acá, o mandala por WhatsApp después de comprar.</span><label class="foto-btn">📷 Subir foto del collar<input type="file" accept="image/*" hidden onchange="subirFoto(this,'c')"></label><div class="foto-est" id="foto-est-c"></div></div></div>`:'';
   return`<div class="fg bord-opc"><label class="chk-idc"><input type="checkbox" id="m-idc" onchange="toggleIdC()"> 🧵 Agregar identificación bordada al collar <b>+${fmt(e.transf)}</b></label>
-    <div id="m-idc-box" style="display:none"><div class="bord-hint">Nombre + hasta 2 teléfonos. Ej: <strong>LUNA 1123456789 / 1187654321</strong></div><input type="text" id="m-bordc" placeholder="ej: LUNA 1123456789" oninput="this.value=this.value.toUpperCase()"></div></div>`;
+    <div id="m-idc-box" style="display:none">
+      ${conArnes?`<label class="chk-idc" style="margin:2px 0 8px;font-weight:700"><input type="checkbox" id="m-idc-igual" onchange="toggleIgual()"> Usar los mismos datos que para el bordado del arnés</label>`:''}
+      <div id="m-idc-datos"><div class="bord-hint">Nombre + hasta 2 teléfonos. Ej: <strong>LUNA 1123456789 / 1187654321</strong></div>${foto}<input type="text" id="m-bordc" placeholder="ej: LUNA 1123456789" oninput="this.value=this.value.toUpperCase()"></div>
+      <div id="m-idc-igual-nota" class="bord-hint" style="display:none">Se borda en el collar lo mismo que escribas en la identificación del arnés (nombre, teléfonos y foto).</div>
+    </div></div>`;
+}
+function toggleIgual(){
+  const on=document.getElementById('m-idc-igual')?.checked;
+  const d=document.getElementById('m-idc-datos');if(d)d.style.display=on?'none':'block';
+  const n=document.getElementById('m-idc-igual-nota');if(n)n.style.display=on?'block':'none';
 }
 function toggleCuello(){
   const c=curProd;if(!c)return;
@@ -1183,6 +1193,7 @@ function toggleCuello(){
 function toggleIdC(){
   const on=document.getElementById('m-idc')?.checked;
   const b=document.getElementById('m-idc-box');if(b)b.style.display=on?'block':'none';
+  if(!on){const g=document.getElementById('m-idc-igual');if(g&&g.checked){g.checked=false;toggleIgual();}}
   precioModal();
 }
 function precioModal(){
@@ -1433,12 +1444,13 @@ function agregarCarrito(){
     const cuello=cuelloOn?(document.getElementById('m-cuello')?.value||'').trim().slice(0,6):'';
     let bord=document.getElementById('m-bord')?.value||'';
     const idc=!!document.getElementById('m-idc')?.checked;
-    const bc=idc?(document.getElementById('m-bordc')?.value||'').trim():'';
-    if(idc&&!bc){const ii=document.getElementById('m-bordc');if(ii){ii.classList.add('err');ii.style.borderColor='#dc2626';ii.style.background='#fef2f2';ii.scrollIntoView({block:'center'});ii.focus();ii.addEventListener('input',()=>{ii.classList.remove('err');ii.style.borderColor='';ii.style.background='';},{once:true});}toast('⚠️ Hay campos sin completar: escribí el nombre para la identificación',4000);return;}
+    const igual=idc&&!!document.getElementById('m-idc-igual')?.checked;
+    const bc=idc?(igual?(document.getElementById('m-bord')?.value||''):(document.getElementById('m-bordc')?.value||'')).trim():'';
+    if(idc&&!bc){const ii=document.getElementById(igual?'m-bord':'m-bordc');if(ii){ii.classList.add('err');ii.style.borderColor='#dc2626';ii.style.background='#fef2f2';ii.scrollIntoView({block:'center'});ii.focus();ii.addEventListener('input',()=>{ii.classList.remove('err');ii.style.borderColor='';ii.style.background='';},{once:true});}toast(igual?'⚠️ Completá primero la identificación del arnés para copiarla al collar':'⚠️ Hay campos sin completar: escribí el nombre para la identificación',4000);return;}
     if(c.id==='collar')bord=bc;
     const exK=idc?'Identificación collar':'';
     const tl=document.getElementById('m-talle')?.value||'',cc=document.getElementById('m-ccolor')?.value||'';
-    carrito.push({id:Date.now()+'',prodId:c.id,nombre:c.short||c.name,emoji:c.emoji,modelo:mod,bordado:bord,bordadoCollar:(c.id==='combo2'||(c.id==='combo1'&&swap==='collar'))?bc:'',extra:exK,pecho,cuello,conCollar:cuelloOn,foto:FOTOS_SUBIDAS['m']||'',largo,swap,swapLabel:swap?swL[swap]:'',precio:p.transf+(exK?exIdC().transf:0),tipo:mapTipo(c.id),talle:tl,colorCorrea:cc,conArnes:!!document.getElementById('m-talle'),pk:claveP(c,largo),pdiv:1});
+    carrito.push({id:Date.now()+'',prodId:c.id,nombre:c.short||c.name,emoji:c.emoji,modelo:mod,bordado:bord,bordadoCollar:(c.id==='combo2'||(c.id==='combo1'&&swap==='collar'))?bc:'',extra:exK,pecho,cuello,conCollar:cuelloOn,foto:(c.id==='collar'?FOTOS_SUBIDAS['c']:FOTOS_SUBIDAS['m'])||'',fotoCollar:(c.id==='collar'||!idc)?'':(igual?(FOTOS_SUBIDAS['m']||''):(FOTOS_SUBIDAS['c']||'')),collarIgual:igual,largo,swap,swapLabel:swap?swL[swap]:'',precio:p.transf+(exK?exIdC().transf:0),tipo:mapTipo(c.id),talle:tl,colorCorrea:cc,conArnes:!!document.getElementById('m-talle'),pk:claveP(c,largo),pdiv:1});
   }
   FOTOS_SUBIDAS={};updateUI();cerrarModalBtn();abrirDrawer();
 }
@@ -1644,7 +1656,7 @@ function notasPedido(){
   carrito.filter(i=>i.pecho).forEach(i=>l.push('📐 Pecho '+String(i.pecho).replace(/[^0-9.,]/g,'')+' cm ('+i.nombre+(i.modelo?' '+i.modelo:'')+')'));
   carrito.filter(i=>i.cuello).forEach(i=>l.push('📐 Cuello '+String(i.cuello).replace(/[^0-9.,]/g,'')+' cm ('+i.nombre+')'));
   if(carrito.some(i=>i.conCollar&&!i.cuello))l.push('Medida de cuello a confirmar por WhatsApp');
-  carrito.filter(i=>i.bordadoCollar).forEach(i=>l.push('🧵 Identificación COLLAR ('+i.nombre+'): '+String(i.bordadoCollar).replace(/[<>"`]/g,'').slice(0,60)));
+  carrito.filter(i=>i.bordadoCollar).forEach(i=>l.push('🧵 Identificación COLLAR ('+i.nombre+'): '+String(i.bordadoCollar).replace(/[<>"`]/g,'').slice(0,60)+(i.collarIgual?' (mismos datos que el arnés)':'')));
   const st=carrito.filter(i=>i.conArnes&&i.modelo&&stockQty(i.modelo,i.talle)>0).map(i=>i.modelo+(i.talle?' '+i.talle:''));
   if(st.length)l.push('🟢 HAY STOCK: '+st.join(', '));
   return l.join(' — ');
@@ -1769,7 +1781,7 @@ async function confirmarPedido(){
   const lim=x=>String(x||'').replace(/[<>"`]/g,'').slice(0,60);
   const nId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2,8);
   const pedido={id:nId,num:Date.now(),fecha:new Date().toISOString(),cliente:lim(ig),nombre:lim(n),provincia:lim(prov),estado:'shop',envio:ENVIO_GESTION[envioTipo]||envioTipo,envioCosto,totalCobrado:(metodoPago==='mp'&&mpDisponible())?totalMP()+envioCosto:total,pago:(metodoPago==='mp'&&mpDisponible())?'mercadopago':'transferencia',pagoEstado:(metodoPago==='mp'&&mpDisponible())?'pendiente':'',origen:'shop',notas:notasPedido(),
-    items:carrito.map(i=>({id:i.id,pk:i.pk||'',pdiv:i.pdiv||1,extra:i.extra||'',tipo:i.tipo,modelo:i.modelo,bordado:lim(i.bordado),bordadoCollar:lim(i.bordadoCollar||''),pecho:lim(i.pecho||''),fotoUrl:String(i.foto||'').startsWith(SUPA_URL+'/storage/v1/object/public/')?i.foto:'',cuello:lim(i.cuello||''),cuelloAConfirmar:!!(i.conCollar&&!i.cuello),largo:i.largo,swap:i.swap,precio:i.precio,cant:1,stockDisp:!!(i.conArnes&&i.modelo&&stockQty(i.modelo,i.talle)>0),talle:i.talle||'',talleAConfirmar:!!(i.conArnes&&!i.talle),colorCorrea:i.colorCorrea||'',accesorios:'pendiente',alias:lim(i.bordado),color:''}))};
+    items:carrito.map(i=>({id:i.id,pk:i.pk||'',pdiv:i.pdiv||1,extra:i.extra||'',tipo:i.tipo,modelo:i.modelo,bordado:lim(i.bordado),bordadoCollar:lim(i.bordadoCollar||''),pecho:lim(i.pecho||''),fotoUrl:String(i.foto||'').startsWith(SUPA_URL+'/storage/v1/object/public/')?i.foto:'',fotoUrlCollar:String(i.fotoCollar||'').startsWith(SUPA_URL+'/storage/v1/object/public/')?i.fotoCollar:'',collarIgual:!!i.collarIgual,cuello:lim(i.cuello||''),cuelloAConfirmar:!!(i.conCollar&&!i.cuello),largo:i.largo,swap:i.swap,precio:i.precio,cant:1,stockDisp:!!(i.conArnes&&i.modelo&&stockQty(i.modelo,i.talle)>0),talle:i.talle||'',talleAConfirmar:!!(i.conArnes&&!i.talle),colorCorrea:i.colorCorrea||'',accesorios:'pendiente',alias:lim(i.bordado),color:''}))};
   const btn=document.getElementById('btn-confirmar');btn.textContent='Guardando…';btn.disabled=true;
   try{
     const resp=await fetch(`${SUPA_URL}/rest/v1/pedidos`,{method:'POST',headers:{...SUPA_H,'Prefer':'return=minimal'},body:JSON.stringify({id:pedido.id,data:pedido})});
