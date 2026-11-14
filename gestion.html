@@ -1379,7 +1379,65 @@ function rPrecios(){
             </tr>`).join('')}
         </tbody>
       </table>
+    </div>
+    <div class="card" style="margin-top:16px;padding:14px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px">🏷️ Códigos de descuento (CLUB MAMBOTEAM)</div>
+      <div style="font-size:12px;color:var(--gray3);margin:4px 0 10px">El cliente lo escribe en el carrito (o entra por tu link con el código ya puesto). El descuento se aplica sobre el precio del medio de pago elegido y el servidor lo vuelve a verificar. No incluye el envío.</div>
+      <div id="codigos-lista">${(codigosData.lista||[]).map((c,i)=>codigoFila(c,i)).join('')||'<div style="font-size:12px;color:var(--gray3);padding:6px 0">Todavía no hay códigos. Creá el primero ↓</div>'}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn" onclick="codigoNuevo()" style="width:auto;padding:10px 16px;background:#fff;color:#111;border:1.5px solid #111">+ Nuevo código</button>
+        <button class="btn" onclick="saveCodigos()" style="width:auto;padding:10px 16px;background:var(--pink-dark);color:#fff">💾 Guardar códigos</button>
+      </div>
     </div>`;
+}
+
+// ── Códigos de descuento: se guardan en la tabla faltantes (fila mambo_codigos); el shop los valida contra el servidor ──
+let codigosData={lista:[]};
+const SHOP_LINK='https://mambomascotas.github.io/mambo/';
+function codNorm(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,30);}
+function codUsos(cod){return pedidos.filter(p=>codNorm(p.codigo)===codNorm(cod)&&p.pagoEstado!=='rechazado').length;}
+function codigoFila(c,i){
+  const inp='border:1.5px solid var(--gray2);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;font-weight:700';
+  const u=c.codigo?codUsos(c.codigo):0;
+  return `<div style="display:grid;grid-template-columns:minmax(120px,1.4fr) 70px minmax(120px,1fr) 140px auto;gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--gray2)">
+    <input style="${inp};text-transform:uppercase" value="${c.codigo||''}" placeholder="CODIGO" maxlength="30" oninput="codigoSet(${i},'codigo',codNorm(this.value));this.value=codNorm(this.value)">
+    <div style="display:flex;align-items:center;gap:3px"><input type="number" min="1" max="90" style="${inp};width:54px" value="${c.pct||''}" placeholder="10" oninput="codigoSet(${i},'pct',+this.value)">%</div>
+    <select style="${inp}" onchange="codigoSet(${i},'medio',this.value)"><option value="todos"${(c.medio||'todos')==='todos'?' selected':''}>Cualquier medio</option><option value="transf"${c.medio==='transf'?' selected':''}>Solo transferencia</option><option value="mp"${c.medio==='mp'?' selected':''}>Solo Mercado Pago</option></select>
+    <input type="date" style="${inp}" value="${c.hasta||''}" title="Vence (vacío = sin vencimiento)" onchange="codigoSet(${i},'hasta',this.value)">
+    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <label style="font-size:12px;font-weight:800"><input type="checkbox" style="width:18px;height:18px;vertical-align:middle;accent-color:var(--pink-dark)" ${c.activo!==false?'checked':''} onchange="codigoSet(${i},'activo',this.checked)"> Activo</label>
+      <span style="font-size:11px;color:var(--gray3);white-space:nowrap">${u} uso${u===1?'':'s'}</span>
+      <button class="btn" style="width:auto;padding:4px 9px;font-size:11px;background:#fff;color:#111;border:1.5px solid var(--gray2)" onclick="codigoLink(${i})">🔗 Link</button>
+      <button class="btn" style="width:auto;padding:4px 9px;font-size:11px;background:#fff;color:#dc2626;border:1.5px solid #fca5a5" onclick="codigoBorrar(${i})">✕</button>
+    </div></div>`;
+}
+function codigoSet(i,k,v){if(codigosData.lista[i])codigosData.lista[i][k]=v;}
+function codigoNuevo(){codigosData.lista.push({codigo:'',pct:10,medio:'todos',hasta:'',activo:true});rPrecios();}
+function codigoBorrar(i){if(!confirm('¿Borrar este código?'))return;codigosData.lista.splice(i,1);rPrecios();saveCodigos(true);}
+function codigoLink(i){
+  const c=codigosData.lista[i];if(!c||!c.codigo){toast('Escribí el código primero');return;}
+  const url=SHOP_LINK+'?cod='+encodeURIComponent(c.codigo);
+  (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('🔗 Link copiado: '+url,4000)).catch(()=>prompt('Copiá este link:',url));
+}
+async function saveCodigos(silencioso){
+  const l=codigosData.lista.filter(c=>codNorm(c.codigo));
+  const vistos=new Set();
+  for(const c of l){c.codigo=codNorm(c.codigo);c.pct=Math.min(90,Math.max(1,Math.round(+c.pct||0)));if(vistos.has(c.codigo)){toast('⚠️ Código repetido: '+c.codigo);return;}vistos.add(c.codigo);}
+  codigosData.lista=l;
+  try{
+    const r=await fetch(`${SUPA_URL}/rest/v1/faltantes`,{method:'POST',headers:{...supaHeaders,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({id:'mambo_codigos',data:codigosData})});
+    if(!r.ok)throw new Error(r.status);
+    if(!silencioso)toast('🏷️ Códigos guardados');
+  }catch(e){toast('⚠️ No se pudieron guardar los códigos. Probá de nuevo.');}
+  rPrecios();
+}
+async function loadCodigos(){
+  try{
+    const r=await fetch(`${SUPA_URL}/rest/v1/faltantes?select=data&id=eq.mambo_codigos`,{headers:supaHeaders});
+    const d=await r.json();
+    if(d&&d[0]&&d[0].data&&Array.isArray(d[0].data.lista))codigosData=d[0].data;
+  }catch(e){}
+  try{rPrecios();}catch(e){}
 }
 
 let curStockTalle='';
@@ -4448,6 +4506,7 @@ async function loadData(){
   loadFaltantes();
   loadInsumos();
   loadStockMin();
+  loadCodigos();
   initVista(); // Re-apply vista after data loads so tabla renders with actual data
 }
 // ══════════ UNDO / REDO ══════════

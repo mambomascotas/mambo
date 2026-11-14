@@ -370,6 +370,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .mt span{position:absolute;left:0;right:0;bottom:0;padding:9px 2px 2px;text-align:center;font-size:9.5px;font-weight:700;line-height:1.1;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 .mod-sel{display:inline;font-size:12px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--gray3)}
 .mod-sel.ok{color:var(--rose);font-weight:800}
+.cupon-box{margin:12px 0 10px;background:#fdf1f6;border:1.5px solid #f6d3e2;border-radius:12px;padding:10px 12px}.cupon-box label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.cupon-row{display:flex;gap:8px}.cupon-row input{flex:1;min-width:0;border:1.5px solid #e5e7eb;border-radius:9px;padding:9px 11px;font:inherit;font-weight:700;letter-spacing:.5px;background:#fff}.cupon-row button{border:0;border-radius:9px;background:#111;color:#fff;font-weight:800;padding:0 16px;cursor:pointer}.cupon-msg{font-size:12px;margin-top:6px;min-height:0}.cupon-msg.ok{color:#15803d;font-weight:700}.cupon-msg.bad{color:#dc2626;font-weight:700}
+.cinto-fijo{background:#fff;border:1.5px dashed #e8a9c4;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;flex-direction:column;gap:3px;font-size:13px}.cinto-fijo small{color:var(--gray3);font-size:11px}
 .m-sec{min-width:0;background:#fdf1f6;border:1.5px solid #f6d3e2;border-radius:14px;padding:12px 13px 4px;margin-bottom:12px}
 .m-sec-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#111;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid #f6d3e2}
 .m-sec-h i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--rose);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;letter-spacing:0}
@@ -648,8 +650,12 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
       <div class="envio-opt" onclick="selEnvio('urquiza',0,this)"><div class="envio-opt-icon">📍</div><div class="envio-opt-info"><div class="envio-opt-name">Retiro en Urquiza<span class="envio-free">GRATIS</span></div><div class="envio-opt-desc">CABA — coordinar por WhatsApp</div></div><div class="envio-price">$0</div></div>
       <div class="envio-opt" onclick="selEnvio('moto',0,this)"><div class="envio-opt-icon">🏍️</div><div class="envio-opt-info"><div class="envio-opt-name">Motito CABA</div><div class="envio-opt-desc">Costo aparte — lo coordinamos por WhatsApp</div></div><div class="envio-price">A coordinar</div></div>
       <div class="envio-opt" onclick="selEnvio('motogba',0,this)"><div class="envio-opt-icon">🏍️</div><div class="envio-opt-info"><div class="envio-opt-name">Motito GBA</div><div class="envio-opt-desc">Costo aparte — lo coordinamos por WhatsApp</div></div><div class="envio-price">A coordinar</div></div>
+      <div class="cupon-box"><label for="cupon-in">🏷️ ¿Tenés un código de descuento?</label>
+        <div class="cupon-row"><input id="cupon-in" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej: CLUBMAMBOTEAM" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')aplicarCodigo()"><button type="button" id="cupon-btn" onclick="aplicarCodigo()">Aplicar</button></div>
+        <div id="cupon-msg" class="cupon-msg"></div></div>
       <div class="total-box">
         <div class="total-row"><span>Subtotal</span><span id="subtotal-val">$0</span></div>
+        <div class="total-row" id="desc-row" style="display:none;color:#15803d;font-weight:700"><span id="desc-lbl">Descuento</span><span id="desc-val"></span></div>
         <div class="total-row"><span>Envío</span><span id="envio-val">Gratis</span></div>
         <div class="total-final"><span class="total-final-label">Total</span><span class="total-final-amount" id="total-val">$0</span></div>
       </div>
@@ -1134,7 +1140,8 @@ function renderModal(){
       ${talleF}${pechoF}</div>`:'';
   const nAcc=hasMod?(hasBord?3:2):1;
   const accTit=hasMod?'Accesorios':(c.id==='collar'?'Collar':'Correa');
-  const accBody=`${swapF}${largoF}${colF2}${cuelloF}${idcF}`;
+  const cintoNota=`<div class="cinto-fijo"><b>🚗 Cinturón de seguridad para auto</b><span>Color: <b>Negro</b> · Largo: <b>0.80 m</b></span><small>Medida y color fijos: no se pueden modificar.</small></div>`;
+  const accBody=c.id==='cinturon'?cintoNota:`${swapF}${largoF}<div id="m-cinto-nota" style="display:none">${cintoNota}</div>${colF2?'<div id="m-cc-wrap">'+colF2+'</div>':''}${cuelloF}${idcF}`;
   const secAcc=accBody.trim()?`<div class="m-sec"><div class="m-sec-h"><i>${nAcc}</i>${accTit}</div>${accBody}</div>`:'';
   const opts='';
 
@@ -1187,6 +1194,7 @@ function toggleCuello(){
   show('m-cuello-wrap',col);show('m-idc-wrap',col);
   if(!col){const k=document.getElementById('m-idc');if(k&&k.checked){k.checked=false;toggleIdC();}}
   show('m-largo-wrap',sw==='');
+  show('m-cinto-nota',sw==='cinturon');show('m-cc-wrap',sw!=='cinturon');
   if(sw!==''){const l=document.getElementById('m-largo');if(l&&l.value!=='1.20mt'){l.value='1.20mt';onMLargo();}}
   const lb=document.getElementById('m-cc-lbl');if(lb)lb.innerHTML=col?'Color del collar':'<b>Color de correa</b>';
 }
@@ -1449,7 +1457,7 @@ function agregarCarrito(){
     if(idc&&!bc){const ii=document.getElementById(igual?'m-bord':'m-bordc');if(ii){ii.classList.add('err');ii.style.borderColor='#dc2626';ii.style.background='#fef2f2';ii.scrollIntoView({block:'center'});ii.focus();ii.addEventListener('input',()=>{ii.classList.remove('err');ii.style.borderColor='';ii.style.background='';},{once:true});}toast(igual?'⚠️ Completá primero la identificación del arnés para copiarla al collar':'⚠️ Hay campos sin completar: escribí el nombre para la identificación',4000);return;}
     if(c.id==='collar')bord=bc;
     const exK=idc?'Identificación collar':'';
-    const tl=document.getElementById('m-talle')?.value||'',cc=document.getElementById('m-ccolor')?.value||'';
+    const tl=document.getElementById('m-talle')?.value||'',cc=(c.id==='cinturon'||swap==='cinturon')?'Negro · cinturón 0.80 m':(document.getElementById('m-ccolor')?.value||'');
     carrito.push({id:Date.now()+'',prodId:c.id,nombre:c.short||c.name,emoji:c.emoji,modelo:mod,bordado:bord,bordadoCollar:(c.id==='combo2'||(c.id==='combo1'&&swap==='collar'))?bc:'',extra:exK,pecho,cuello,conCollar:cuelloOn,foto:(c.id==='collar'?FOTOS_SUBIDAS['c']:FOTOS_SUBIDAS['m'])||'',fotoCollar:(c.id==='collar'||!idc)?'':(igual?(FOTOS_SUBIDAS['m']||''):(FOTOS_SUBIDAS['c']||'')),collarIgual:igual,largo,swap,swapLabel:swap?swL[swap]:'',precio:p.transf+(exK?exIdC().transf:0),tipo:mapTipo(c.id),talle:tl,colorCorrea:cc,conArnes:!!document.getElementById('m-talle'),pk:claveP(c,largo),pdiv:1});
   }
   FOTOS_SUBIDAS={};updateUI();cerrarModalBtn();abrirDrawer();
@@ -1504,8 +1512,9 @@ function updateUI(){
 function detItem(i){
   const a=[];
   if(i.conArnes)a.push(i.talle?'Talle '+i.talle:'Talle a confirmar');
+  if(i.prodId==='cinturon'){a.push('Negro · 0.80 m');return a.join(' · ');}
   if(i.largo&&i.largo!=='1.20mt')a.push('Correa '+i.largo);
-  if(i.colorCorrea)a.push('Correa '+i.colorCorrea);
+  if(i.colorCorrea)a.push((i.swap==='cinturon'?'':'Correa ')+i.colorCorrea);
   if(i.swapLabel)a.push(i.swapLabel);
   return a.join(' · ');
 }
@@ -1528,7 +1537,8 @@ function renderCarrito(){
 }
 
 function renderTotal(){
-  const sub=carrito.reduce((s,i)=>s+i.precio,0);const total=sub+envioCosto;
+  const sub=subRaw(),dsc=descTransf();const total=sub-dsc+envioCosto;
+  const dr=document.getElementById('desc-row');if(dr){dr.style.display=dsc>0?'flex':'none';document.getElementById('desc-lbl').textContent='Código '+(cupon?cupon.codigo:'')+' (−'+(cupon?cupon.pct:0)+'%)';document.getElementById('desc-val').textContent='−'+fmt(dsc);}
   document.getElementById('subtotal-val').textContent=fmt(sub);
   document.getElementById('envio-val').textContent=envioCosto>0?fmt(envioCosto):(envioTipo==='moto'||envioTipo==='motogba'?'A coordinar':'Gratis');
   document.getElementById('total-val').textContent=fmt(total);
@@ -1617,10 +1627,11 @@ function irAPago(){
     return;
   }
   if(er)er.classList.remove('on');
-  const sub=carrito.reduce((s,i)=>s+i.precio,0);const total=sub+envioCosto;
+  const sub=subT();const total=sub+envioCosto;
   const eL={sucursal:'Correo Sucursal',domicilio:'Correo Domicilio',urquiza:'Retiro Urquiza',moto:'Motito CABA',motogba:'Motito GBA'};
   document.getElementById('pago-resumen-items').innerHTML=
     carrito.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${i.bordado?String(i.bordado).replace(/[<>"`]/g,'')+' · ':''}${i.nombre}${i.modelo?' — '+i.modelo:''}</span><span style="font-weight:700">${fmt(i.precio)}</span></div>`).join('')+
+    (descTransf()>0?`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;color:#15803d;font-weight:700"><span>Código ${cupon.codigo} (−${cupon.pct}%)</span><span>−${fmt(descTransf())}</span></div>`:'')+
     `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray3)"><span>Envío — ${eL[envioTipo]||envioTipo}</span><span>${envioCosto>0?fmt(envioCosto):'Gratis'}</span></div>`;
   document.getElementById('pago-total').textContent=fmt(total);
   document.getElementById('alias-show').textContent=ALIAS;
@@ -1630,14 +1641,38 @@ function irAPago(){
 
 // ── Método de pago (transferencia / Mercado Pago) ──
 let metodoPago='transf';
-function totalMP(){return carrito.reduce((s,i)=>s+Math.round(((precios[i.pk]||{}).mp||0)/(i.pdiv||1))+(i.extra?((precios[i.extra]||{}).mp||0):0),0);}
+// ── Código de descuento (se valida en el servidor; Mercado Pago lo vuelve a aplicar ahí) ──
+let cupon=null;   // {codigo,pct,medio:'todos'|'transf'|'mp'}
+const subRaw=()=>carrito.reduce((s,i)=>s+i.precio,0);
+function descTransf(){return cupon&&cupon.medio!=='mp'?Math.round(subRaw()*cupon.pct/100):0;}
+function subT(){return subRaw()-descTransf();}                       // subtotal con promo transferencia ya descontado
+function mpU(u){return cupon&&cupon.medio!=='transf'?Math.round(u*(100-cupon.pct)/100):u;}
+function totalMP(){return carrito.reduce((s,i)=>s+mpU(Math.round(((precios[i.pk]||{}).mp||0)/(i.pdiv||1)))+(i.extra?mpU((precios[i.extra]||{}).mp||0):0),0);}
+function cuponUI(ok,txt){const m=document.getElementById('cupon-msg');if(m){m.className='cupon-msg '+(ok===true?'ok':ok===false?'bad':'');m.textContent=txt||'';}}
+async function aplicarCodigo(desdeLink){
+  const inp=document.getElementById('cupon-in'),btn=document.getElementById('cupon-btn');if(!inp)return;
+  if(cupon){cupon=null;inp.value='';inp.disabled=false;btn.textContent='Aplicar';cuponUI(null,'');renderTotal();if(document.getElementById('view-pago')?.classList.contains('on'))renderMetodos();return;}
+  const c=(inp.value||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,30);
+  if(!c){cuponUI(false,'Escribí tu código.');return;}
+  btn.disabled=true;cuponUI(null,'Verificando…');
+  try{
+    const r=await fetch(MP_FN,{method:'POST',headers:SUPA_H,body:JSON.stringify({accion:'codigo',codigo:c})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.ok){
+      cupon={codigo:d.codigo,pct:d.pct,medio:d.medio||'todos'};inp.value=d.codigo;inp.disabled=true;btn.textContent='Quitar';
+      cuponUI(true,'✅ Código aplicado: '+d.pct+'% de descuento'+(cupon.medio==='transf'?' pagando por transferencia':cupon.medio==='mp'?' pagando con Mercado Pago':'')+'.');
+      if(desdeLink===true)toast('🏷️ Código '+d.codigo+' aplicado',3000);
+    }else cuponUI(false,'❌ '+(d.msg||'Ese código no existe o ya venció.'));
+  }catch(e){cuponUI(false,'No pudimos verificar el código ahora. Probá de nuevo en un momento.');}
+  btn.disabled=false;renderTotal();
+}
 function mpDisponible(){return MP_ACTIVO&&carrito.length&&carrito.every(i=>i.pk&&(precios[i.pk]||{}).mp>0);}
 function setMetodo(m){metodoPago=m;renderMetodos();}
 function renderMetodos(){
   const box=document.getElementById('pago-metodos'),tb=document.getElementById('pago-transf-box'),nt=document.getElementById('pago-notice'),btn=document.getElementById('btn-confirmar');
   if(!box)return;
   if(!mpDisponible()){box.style.display='none';tb.style.display='';if(nt)nt.style.display='';btn.textContent='✅ Confirmar pedido y finalizar compra';return;}
-  const sub=carrito.reduce((s,i)=>s+i.precio,0),mp=totalMP();
+  const sub=subT(),mp=totalMP();
   box.style.display='block';if(nt)nt.style.display='none';
   box.innerHTML=`<div class="ed-opts">
     <button type="button" class="ed-opt${metodoPago==='transf'?' on':''}" onclick="setMetodo('transf')"><b>Promo transferencia bancaria · ${fmt(sub+envioCosto)}</b><span>El mejor precio</span></button>
@@ -1650,6 +1685,7 @@ function renderMetodos(){
 const ENVIO_GESTION={sucursal:'Correo Arg Sucursal',domicilio:'Correo Arg Domicilio',urquiza:'Retira Urquiza',moto:'Motito CABA',motogba:'Motito GBA'};
 function notasPedido(){
   const l=['Pedido desde la web'];
+  if(cupon)l.push('🏷️ CÓDIGO '+cupon.codigo+' (−'+cupon.pct+'%'+(cupon.medio==='transf'?', solo transferencia':cupon.medio==='mp'?', solo Mercado Pago':'')+')'+(descTransf()>0?' −'+fmt(descTransf())+' en el total por transferencia':''));
   if(envioTipo==='sucursal'||envioTipo==='domicilio'){const d=datosEnvioTxt();l.push(d?'Datos de envío: '+d:'Datos de envío: los manda por WhatsApp');}
   if(carrito.some(i=>i.conArnes&&!i.talle))l.push('Talle a confirmar por WhatsApp');
   if(carrito.some(i=>i.foto))l.push('📷 Subió foto del perro para el bordado');
@@ -1769,7 +1805,9 @@ async function lgEnviar(tipo){
     err.innerHTML='No pudimos registrar la solicitud. Escribinos por <a href="https://wa.me/5491140972105" target="_blank" rel="noopener">WhatsApp</a> y la gestionamos de inmediato.';err.style.display='block';
   }
 }
-document.addEventListener('DOMContentLoaded',()=>{const f=document.getElementById('foot-prov');if(f)f.innerHTML=lgProv();});
+document.addEventListener('DOMContentLoaded',()=>{const f=document.getElementById('foot-prov');if(f)f.innerHTML=lgProv();
+  try{const q=(new URLSearchParams(location.search).get('cod')||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,30);if(q){document.getElementById('cupon-in').value=q;setTimeout(()=>aplicarCodigo(true),700);}}catch(e){}   // link del club: ?cod=CODIGO
+});
 if(document.readyState!=='loading'){const f=document.getElementById('foot-prov');if(f)f.innerHTML=lgProv();}
 async function confirmarPedido(){
   if((document.getElementById('hp-web')||{}).value){return;}   // campo trampa: solo lo completan los bots
@@ -1777,10 +1815,10 @@ async function confirmarPedido(){
   const n=document.getElementById('d-nombre').value.trim();
   const ig=document.getElementById('d-ig').value.trim();
   const prov=document.getElementById('d-prov').value;
-  const sub=carrito.reduce((s,i)=>s+i.precio,0);const total=sub+envioCosto;
+  const sub=subT();const total=sub+envioCosto;
   const lim=x=>String(x||'').replace(/[<>"`]/g,'').slice(0,60);
   const nId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2,8);
-  const pedido={id:nId,num:Date.now(),fecha:new Date().toISOString(),cliente:lim(ig),nombre:lim(n),provincia:lim(prov),estado:'shop',envio:ENVIO_GESTION[envioTipo]||envioTipo,envioCosto,totalCobrado:(metodoPago==='mp'&&mpDisponible())?totalMP()+envioCosto:total,pago:(metodoPago==='mp'&&mpDisponible())?'mercadopago':'transferencia',pagoEstado:(metodoPago==='mp'&&mpDisponible())?'pendiente':'',origen:'shop',notas:notasPedido(),
+  const pedido={id:nId,num:Date.now(),fecha:new Date().toISOString(),cliente:lim(ig),nombre:lim(n),provincia:lim(prov),estado:'shop',envio:ENVIO_GESTION[envioTipo]||envioTipo,envioCosto,totalCobrado:(metodoPago==='mp'&&mpDisponible())?totalMP()+envioCosto:total,pago:(metodoPago==='mp'&&mpDisponible())?'mercadopago':'transferencia',pagoEstado:(metodoPago==='mp'&&mpDisponible())?'pendiente':'',origen:'shop',codigo:cupon?cupon.codigo:'',descuentoPct:cupon?cupon.pct:0,descuentoTransf:descTransf(),notas:notasPedido(),
     items:carrito.map(i=>({id:i.id,pk:i.pk||'',pdiv:i.pdiv||1,extra:i.extra||'',tipo:i.tipo,modelo:i.modelo,bordado:lim(i.bordado),bordadoCollar:lim(i.bordadoCollar||''),pecho:lim(i.pecho||''),fotoUrl:String(i.foto||'').startsWith(SUPA_URL+'/storage/v1/object/public/')?i.foto:'',fotoUrlCollar:String(i.fotoCollar||'').startsWith(SUPA_URL+'/storage/v1/object/public/')?i.fotoCollar:'',collarIgual:!!i.collarIgual,cuello:lim(i.cuello||''),cuelloAConfirmar:!!(i.conCollar&&!i.cuello),largo:i.largo,swap:i.swap,precio:i.precio,cant:1,stockDisp:!!(i.conArnes&&i.modelo&&stockQty(i.modelo,i.talle)>0),talle:i.talle||'',talleAConfirmar:!!(i.conArnes&&!i.talle),colorCorrea:i.colorCorrea||'',accesorios:'pendiente',alias:lim(i.bordado),color:''}))};
   const btn=document.getElementById('btn-confirmar');btn.textContent='Guardando…';btn.disabled=true;
   try{
@@ -1806,7 +1844,7 @@ async function confirmarPedido(){
 
 function mapTipo(id){const m={arnes:'Arnés',combo1:'Combo 1 — Arnés + Correa',combo2:'Combo 2 — Arnés + Correa + Collar',combox2a:'Arnés',combox2c:'Combo 1 — Arnés + Correa',collar:'Collar',correa:'Correa',cinturon:'Cinturón auto'};return m[id]||id;}
 function copiarAlias(){navigator.clipboard.writeText(ALIAS).then(()=>toast('✓ Alias copiado'));}
-function reiniciar(){carrito=[];envioTipo='sucursal';envioCosto=0;envioModo='luego';updateUI();showView('shop');}
+function reiniciar(){cupon=null;try{const i=document.getElementById('cupon-in');if(i){i.value='';i.disabled=false;document.getElementById('cupon-btn').textContent='Aplicar';cuponUI(null,'');}}catch(e){}carrito=[];envioTipo='sucursal';envioCosto=0;envioModo='luego';updateUI();showView('shop');}
 function showView(id){
   try{cerrarDrawer();}catch(e){}
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
