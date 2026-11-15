@@ -1696,7 +1696,7 @@ async function aplicarCodigo(desdeLink){
       cupon={codigo:d.codigo,pct:d.pct||0,medio:d.medio||'todos',productos:d.productos||[],modelos:d.modelos||[],fijoT:d.fijoT||0,fijoMP:d.fijoMP||0};inp.value=d.codigo;inp.disabled=true;btn.textContent='Quitar';
       cuponUI(true,'✅ Código aplicado: '+cuponDesc()+'.');
       if(desdeLink===true)toast('🏷️ Código '+d.codigo+' aplicado',3000);
-    }else cuponUI(false,'❌ '+(d.msg||'Ese código no existe o ya venció.'));
+    }else cuponUI(false,'❌ '+(d.msg||'Ese código no existe, ya venció o no aplica para este producto.'));
   }catch(e){cuponUI(false,'No pudimos verificar el código ahora. Probá de nuevo en un momento.');}
   btn.disabled=false;renderTotal();
 }
