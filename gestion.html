@@ -1278,7 +1278,48 @@ function goTab(el){
 const numShow=p=>(p.num>1e12?'🛍':p.num);   // pedidos de la tienda traen un número gigante (timestamp)
 const esRepo=p=>!!p&&p.origen==='stock';
 const pedReales=()=>pedidos.filter(p=>!esRepo(p));
-function renderAll(){try{procesarStockIngresos();}catch(e){}rDash();rPedidos();rVentas();rProd();rFacturacion();rBordados();rStock();rPrecios();try{rInsumos();}catch(e){}try{rStockIns();}catch(e){}}
+// Pedidos nuevos de la tienda: (1) número correlativo en vez de 🛍, (2) los arneses que hay en stock se reservan (descuentan) al momento de la compra;
+// los que no hay quedan para fabricar y descuentan insumos. Se re-lee el pedido y el stock de la base para no pisar a otra sesión.
+let _procShop=false,_procShopT=0;
+async function procesarShopNuevos(){
+  if(_procShop||Date.now()-_procShopT<60000)return;
+  const pend=pedidos.filter(p=>!esRepo(p)&&(p.num>1e12||(p.estado==='shop'&&!p.shopProc)));
+  if(!pend.length)return;
+  _procShop=true;_procShopT=Date.now();
+  try{
+    pend.sort((a,b)=>pedCreado(a)-pedCreado(b));
+    let sig=pedidos.reduce((m,p)=>(p.num<1e12&&p.num>m?p.num:m),0)+1;
+    const usados=[];
+    for(const p of pend){
+      const r=await fetch(`${SUPA_URL}/rest/v1/pedidos?select=data&id=eq.${encodeURIComponent(p.id)}`,{headers:supaHeaders});
+      if(!r.ok)continue;
+      const f=((await r.json())||[])[0];
+      if(f&&f.data&&(f.data.num<1e12)&&(f.data.shopProc||p.estado!=='shop')){Object.assign(p,limpiar(f.data));continue;}   // otra sesión ya lo procesó
+      let cambio=false;
+      if(p.estado==='shop'&&!p.shopProc){
+        const rs=await fetch(`${SUPA_URL}/rest/v1/stock?select=data&id=eq.mambo_stock`,{headers:supaHeaders});
+        if(!rs.ok)continue;
+        const sd=((await rs.json())||[])[0]?.data||stockData;
+        let sacó=false;
+        p.items.forEach(i=>{
+          if(!tieneArnes(i.tipo)||i.desdeStock||i.estadoItem||!i.modelo||!i.talle)return;
+          const n=i.cant||1;
+          if(((sd[i.modelo]||{})[i.talle]||0)>=n){
+            sd[i.modelo][i.talle]-=n;i.desdeStock=true;i.estadoItem='shop';sacó=true;usados.push(i.modelo+' '+i.talle);
+          }
+        });
+        if(sacó){stockData=sd;await saveStock();}
+        p.shopProc=true;cambio=true;
+      }
+      if(p.num>1e12){p.num=sig++;cambio=true;}
+      if(cambio)await saveOnePedido(p);
+    }
+    if(usados.length)toast('📦 Pedido de la tienda: se descontó del stock → '+usados.join(', '),6000);
+    renderAll();
+  }catch(e){}
+  _procShop=false;
+}
+function renderAll(){try{procesarStockIngresos();}catch(e){}try{procesarShopNuevos();}catch(e){}rDash();rPedidos();rVentas();rProd();rFacturacion();rBordados();rStock();rPrecios();try{rInsumos();}catch(e){}try{rStockIns();}catch(e){}}
 
 // Global helper
 const tieneArnes=t=>t&&(t.includes('Arnés')||t.includes('Combo 1')||t.includes('Combo 2'));
@@ -2070,7 +2111,7 @@ function rTabla(){
             html += `<td style="background:${rowBg};${first?borderTop:''}">
               <select onchange="quickEstadoItem('${p.id}','${item.id}',this.value)" style="background:${itemEstColor};font-size:11px;padding:3px 4px;border-radius:7px;border:none;width:100%">
                 ${['shop','nuevo','marroquineria','listo','enviado'].map(v=>`<option value="${v}"${itemEstado===v?' selected':''}>${v.charAt(0).toUpperCase()+v.slice(1)}</option>`).join('')}
-              </select>
+              </select>${(item.desdeStock&&itemEstado==='shop')?`<div style="font-size:10px;font-weight:800;color:var(--green);margin-top:2px;white-space:nowrap">📦 de stock</div>`:''}
             </td>`;
             // Acc per item
             html += `<td style="background:${rowBg};${first?borderTop:''}">
@@ -2188,11 +2229,20 @@ function eliminarPedidoTabla(id, num){
   toast('Pedido eliminado');
 }
 
+function finEstadoItem(p){
+  const orden=['shop','nuevo','marroquineria','listo','enviado'];
+  const est=p.items.map(i=>efEstado(p,i));
+  const mi=Math.min(...est.map(e=>orden.indexOf(e)).filter(i=>i>=0));
+  p.estado=orden[mi]||p.estado;
+  saveOnePedido(p);renderAll();
+}
 function quickEstadoItem(pedId, itemId, val){
   const p = pedidos.find(p=>p.id===pedId);
   if(!p) return;
   const item = p.items.find(i=>i.id===itemId);
   if(!item) return;
+  // Pedido de la tienda confirmado (Shop → Nuevo): si el arnés ya se reservó del stock, pasa directo a Listo (la correa se fabrica igual)
+  if(efEstado(p,item)==='shop'&&val==='nuevo'&&item.desdeStock)val='listo';
   item.estadoItem = val;
   // Sync pedido estado: take the "most advanced" state across all items
   const orden = ['shop','nuevo','marroquineria','listo','enviado'];
@@ -2435,7 +2485,8 @@ function rProd(){
   pedidos.forEach(p=>{
     p.items.forEach(i=>{
       if(tieneArnes(i.tipo)){
-        const estadoItem=i.estadoItem||(i.desdeStock?'listo':'nuevo');
+        let estadoItem=efEstado(p,i);
+        if(estadoItem==='shop'&&!i.desdeStock)estadoItem='nuevo';   // comprado en la tienda y sin stock: ya hay que fabricarlo (y descuenta insumos)
         if(estadoItem==='nuevo'||estadoItem==='stock'){
           arnesItems.push({...i, pedidoRepo:esRepo(p), pedidoNum:p.num, pedidoId:p.id, pedidoEstado:p.estado, estadoItem});
         }
@@ -3128,13 +3179,15 @@ let insumos={panal:{stock:0,desdeTs:null},goma:{stock:0,desdeTs:null},anchoPanal
   rec:{med_25:{g:'chico',q:1},med_4:{g:'grande',q:1},
        mosq_ch:{g:'mosq_chico',q:1},mosq_gr:{g:'mosq_grande',q:1},mosq_25:{g:'cinturon',q:1},ribete_21:{g:'ribete',q:1,auto:true},etq_cuero:{g:'piezas',q:1},etq_plat:{g:'piezas_plata',q:1},
        ...Object.fromEntries(Object.entries(CP30_COLOR).map(([id,c])=>[id,{g:'cinta',q:1,color:c,auto:true}]))},
-  recV:5,
+  recV:6,
   cmap:{},                                                  // color de correa por modelo (se completa/edita)
   stk:{}};                                                  // stock de cada insumo: {id:{stock,desdeTs}}
 const GRUPOS={chico:'Arnés chico (XS, S)',grande:'Arnés grande (M, L, XL)',correa:'Correa',collar:'Collar',
   piezas:'Cada pieza (arnés, correa, collar, cinturón)',piezas_plata:'Cada pieza modelo Rock o Paris',mosq_chico:'Correa con mosquetón chico (arnés XS, S, M)',mosq_grande:'Correa con mosquetón grande (arnés L, XL)',cinturon:'Cinturón de seguridad'};
 const EDIT_GRUPOS=['grande','chico','correa','collar','cinturon'];
 function itemLabel(id){const it=Object.values(FALT_ITEMS).flat().find(x=>x.id===id);return it?it:{label:id,unidad:'u'};}
+// unidades de herraje por arnés (el consumo = arneses producidos desde el último conteo × esto)
+const RECETA_Q={med_25:1,pov_25:1,ppl_25:2,heb_25:1,reg_25:1, med_4:1,pov_4:3,heb_4:1,reg_4:1};
 function grupoSugerido(id){
   if(CP30_COLOR[id])return 'cinta';
   if(id==='ribete_21')return 'ribete';
@@ -3344,7 +3397,7 @@ function insumoStockSet(id,v){
 }
 function insumoLink(id){
   const g=grupoSugerido(id);
-  insumos.rec[id]=g==='cinta'?{g,q:1,color:CP30_COLOR[id],auto:true}:g==='ribete'?{g,q:1,auto:true}:{g,q:0};
+  insumos.rec[id]=g==='cinta'?{g,q:1,color:CP30_COLOR[id],auto:true}:g==='ribete'?{g,q:1,auto:true}:{g,q:RECETA_Q[id]||0};
   saveInsumos();renderFaltantes();
 }
 function insumoUnlink(id){
@@ -3397,11 +3450,13 @@ function usoArnes(mat,k){
   return n>0?1/n:0;
 }
 function pedCreado(p){
-  const n=parseInt(p.id);
+  const n=parseInt(String(p.id).replace(/^repo-/,''));   // las reposiciones tienen id 'repo-<ms>': antes quedaban fechadas al mediodía y no descontaban si el stock se contó ese mismo día
   if(n>1e12)return n;
   if(p.num>1e12)return p.num;
   return Date.parse(p.fecha)||0;
 }
+// estado efectivo de un ítem: los pedidos del shop sin confirmar siguen en 'shop' (no son producción ni consumen insumos ni stock hasta pasarlos a Nuevo)
+function efEstado(p,i){return i.estadoItem||(i.desdeStock?'listo':(p.estado==='shop'?'shop':'nuevo'));}   // 'shop' = comprado en la tienda, falta confirmar el pago
 function arnesesDesde(ts){
   const c={XS:0,S:0,ML:0,XL:0};
   pedidos.forEach(p=>{
@@ -3477,7 +3532,11 @@ async function loadInsumos(){
         if(!rec.etq_plat)rec.etq_plat={g:'piezas_plata',q:1};
         setTimeout(()=>{try{saveInsumos();}catch(e){}},0);
       }
-      insumos.rec=rec;insumos.recV=5;
+      if((sv.recV||0)<6){   // herrajes vinculados con 0 unidades por arnés → no descontaban nunca: se completa la receta
+        Object.keys(RECETA_Q).forEach(id=>{if(rec[id]&&!(+rec[id].q>0)&&(rec[id].g==='chico'||rec[id].g==='grande'))rec[id].q=RECETA_Q[id];});
+        setTimeout(()=>{try{saveInsumos();}catch(e){}},0);
+      }
+      insumos.rec=rec;insumos.recV=6;
     }
   }catch(e){}
   rInsumos();rTareas();
