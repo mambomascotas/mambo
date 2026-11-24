@@ -23,7 +23,7 @@
 {"@type":"Question","name":"¿El bordado del nombre tiene costo?","acceptedAnswer":{"@type":"Answer","text":"No. El nombre bordado y los emojis están incluidos."}}]}]}</script>
 <title>MAMBO® — Arneses para perros exigentes</title>
 <link rel="icon" type="image/png" href="https://mambomascotas.github.io/mambo/logo.png">
-<link href="https://fonts.googleapis.com/css2?family=Cabin:wght@500;600;700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cabin:wght@500;600;700&family=Oswald:wght@500;600;700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --rose: #db2777;
@@ -33,7 +33,7 @@
   --cream: #faf8f5;
   --gray: #f5f5f3;
   --gray2: #e8e6e1;
-  --gray3: #9a9690;
+  --gray3: #6e6a63;
   --text: #1a1916;
   --green: #15803d;
 }
@@ -515,6 +515,13 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 #lb button{position:absolute;background:#fff;border:0;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
 #lb .lb-x{top:14px;right:14px}#lb .lb-p{left:10px;top:50%;margin-top:-22px}#lb .lb-n{right:10px;top:50%;margin-top:-22px}
 #lb .lb-h{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:rgba(255,255,255,.7);font-size:12px;pointer-events:none}
+/* títulos de sección: tipografía condensada */
+.t-osw,.why-head h2{font-family:'Oswald','Cabin',sans-serif!important;font-weight:600!important;text-transform:uppercase;letter-spacing:.01em!important;line-height:1.1}
+.t-osw{font-size:clamp(22px,5vw,30px)}
+.why-head h2{font-size:clamp(22px,5vw,30px)}.why-head h2 sup{font-size:.45em;vertical-align:super;line-height:0;font-weight:500}
+.why-head p{color:#4a463f;font-size:15px}
+.pc-desc{color:#4f4b45}.pc-mp{color:#5a564f}
+#sec-combos{scroll-margin-top:84px}@media(max-width:700px){#sec-combos{scroll-margin-top:128px}}
 </style>
 </head>
 <body>
@@ -551,7 +558,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
   <!-- NAV LINKS -->
   <div class="navlinks" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;border-bottom:1.5px solid var(--gray2);background:#fff">
     <a href="#" onclick="showView('shop');return false" style="padding:13px 20px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;border-bottom:2.5px solid var(--rose)">INICIO</a>
-    <a href="#" style="padding:13px 20px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;border-bottom:2.5px solid transparent">PROMOS ❤️‍🔥</a>
+    <a href="#sec-combos" onclick="document.getElementById('sec-combos').scrollIntoView({behavior:'smooth',block:'start'});return false" style="padding:13px 20px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;border-bottom:2.5px solid transparent">PROMOS ❤️‍🔥</a>
     <a href="#por-que" onclick="document.getElementById('por-que').scrollIntoView({behavior:'smooth'});return false" style="padding:13px 20px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;border-bottom:2.5px solid transparent">RESEÑAS 💌</a>
     <a href="#talle" onclick="document.getElementById('modal-talle').style.display='flex';return false" style="padding:13px 20px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;border-bottom:2.5px solid transparent">¿CUÁL ES MI TALLE?</a>
     <a href="#preguntas" onclick="document.getElementById('preguntas').scrollIntoView({behavior:'smooth'});return false" style="padding:13px 20px;font-size:13px;font-weight:700;color:var(--text);text-decoration:none;border-bottom:2.5px solid transparent">PREGUNTAS FRECUENTES</a>
@@ -560,8 +567,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
   </div>
 
   <!-- SECTION TITLE -->
-  <div class="section" style="padding-bottom:8px;padding-top:28px">
-    <div style="text-align:center;padding:8px 0 4px;font-size:32px;font-weight:900;font-family:'Cabin',sans-serif;color:var(--text)">Armá el combo que quieras 🐾</div>
+  <div class="section" id="sec-combos" style="padding-bottom:8px;padding-top:28px">
+    <div class="t-osw" style="text-align:center;padding:8px 0 4px;color:var(--text)">Armá el combo que quieras 🐾</div>
   </div>
 
 
@@ -569,7 +576,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 
   <!-- ¿POR QUÉ MAMBO®? — testimonios de clientes -->
   <div id="por-que" style="background:var(--cream);padding:34px 0 34px">
-    <div class="why-head"><h2>¿Por qué elegir MAMBO®?</h2><p>Miles de clientes felices en TODO EL PAÍS te lo cuentan 🐾</p></div>
+    <div class="why-head"><h2>¿Por qué elegir MAMBO<sup>®</sup>?</h2><p>Miles de clientes felices en TODO EL PAÍS te lo cuentan 🐾</p></div>
     <div class="hero">
       <div class="hero-strip-wrap" id="strip-wrap">
         <div class="hero-strip" id="hero-strip"></div>
