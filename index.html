@@ -523,6 +523,14 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .pc-desc{color:#4f4b45}.pc-mp{color:#5a564f}
 #sec-combos{scroll-margin-top:84px}@media(max-width:700px){#sec-combos{scroll-margin-top:128px}}
 #por-que{padding-top:26px!important;padding-bottom:26px!important}#por-que .hero-slide{height:clamp(320px,calc(100vh - 210px),780px);height:clamp(320px,calc(100svh - 210px),780px)}@media(max-width:700px){#por-que .hero-slide{height:clamp(300px,calc(100svh - 230px),560px)}}
+.banner{line-height:16px}.bn-ic{height:16px;width:auto;vertical-align:top;display:inline-block;margin:0 1px}
+.it-edit{background:none;border:0;color:var(--rose);font-size:12px;font-weight:700;cursor:pointer;padding:4px 0 0;text-decoration:underline}
+.it-editor{margin-top:8px;padding:10px;background:#fff;border:1.5px solid var(--gray2);border-radius:10px;display:flex;flex-direction:column;gap:7px}
+.it-editor label{font-size:11px;font-weight:700;color:var(--gray3);text-transform:uppercase;letter-spacing:.4px}
+.it-editor select,.it-editor input{width:100%;padding:8px 10px;border:1.5px solid var(--gray2);border-radius:8px;font-size:14px;font-family:inherit}
+.it-editor .it-btns{display:flex;gap:8px}
+.it-editor .it-btns button{flex:1;padding:9px;border-radius:8px;border:0;font-weight:700;font-size:13px;cursor:pointer}
+.it-ok{background:var(--black);color:#fff}.it-no{background:var(--gray);color:var(--text)}
 </style>
 </head>
 <body>
@@ -554,7 +562,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
   </section>
 
   <!-- BANNER -->
-  <div class="banner"><span class="bn-full">📦 ENVÍO GRATIS a sucursal CORREO ARGENTINO de TODO EL PAÍS <span class="fl-ar" role="img" aria-label="Argentina"></span> &nbsp;·&nbsp; 💳 3 CUOTAS SIN INTERÉS en todos los combos</span><span class="bn-short">📦 ENVÍO GRATIS a todo el país &nbsp;·&nbsp; 💳 3 CUOTAS SIN INTERÉS</span></div>
+  <div class="banner"><span class="bn-full"><img class="bn-ic" src="https://mambomascotas.github.io/mambo/EnvioCorreo.png" alt="" onerror="this.replaceWith(document.createTextNode('📦'))"> ENVÍO GRATIS a sucursal CORREO ARGENTINO de TODO EL PAÍS <span class="fl-ar" role="img" aria-label="Argentina"></span> &nbsp;·&nbsp; <img class="bn-ic" src="https://mambomascotas.github.io/mambo/Tarjeta.png" alt="" onerror="this.replaceWith(document.createTextNode('💳'))"> 3 CUOTAS SIN INTERÉS en todos los combos</span><span class="bn-short"><img class="bn-ic" src="https://mambomascotas.github.io/mambo/EnvioCorreo.png" alt="" onerror="this.replaceWith(document.createTextNode('📦'))"> ENVÍO GRATIS a todo el país &nbsp;·&nbsp; <img class="bn-ic" src="https://mambomascotas.github.io/mambo/Tarjeta.png" alt="" onerror="this.replaceWith(document.createTextNode('💳'))"> 3 CUOTAS SIN INTERÉS</span></div>
 
   <!-- NAV LINKS -->
   <div class="navlinks" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;border-bottom:1.5px solid var(--gray2);background:#fff">
@@ -718,7 +726,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
       <div id="pago-resumen-items"></div>
       <div class="divider" style="margin:10px 0"></div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-weight:700">Total a transferir</span>
+        <span style="font-weight:700" id="pago-total-lbl">Total a transferir</span>
         <span style="font-family:'Cabin',sans-serif;font-size:24px;font-weight:900;color:var(--rose)" id="pago-total">$0</span>
       </div>
     </div>
@@ -731,7 +739,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
     </div>
     <div class="notice" id="pago-notice">💡 Por ahora solo aceptamos <strong>transferencia bancaria</strong>. Próximamente MercadoPago.</div>
     <input type="text" id="hp-web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
-    <div class="notice" style="margin-top:12px">ℹ️ Los productos con <b>nombre bordado o medidas a pedido</b> son personalizados y <b>no admiten devolución ni arrepentimiento</b>. Revisá bien los datos antes de confirmar.</div>
+    <div class="notice" style="margin-top:12px">⚠️ <b>Atención:</b> si tenés dudas con el talle, lo vemos juntos por WhatsApp luego de finalizar la compra, en el paso siguiente.</div>
     <label class="acepto"><input type="checkbox" id="acepto-tyc"><span>Leí y acepto los <a onclick="lgAbrir('tyc')">Términos y condiciones</a>, la <a onclick="lgAbrir('priv')">Política de privacidad</a> y la política de <a onclick="lgAbrir('camb')">cambios y devoluciones</a>.</span></label>
     <button class="btn-primary" id="btn-confirmar" onclick="confirmarPedido()">✅ Confirmar pedido y finalizar compra</button>
     <button class="btn-secondary" onclick="showView('datos')">← Volver</button>
@@ -759,6 +767,12 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
       <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📦 Datos para el envío</div>
       <div style="font-size:13px;color:#1e3a8a;line-height:1.6;margin-bottom:12px">Pasanos los datos de envío por WhatsApp (te dejamos el mensaje armado, solo completás lo que falta).</div>
       <a id="confirm-envio-a" href="#" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1d4ed8;color:#fff;text-decoration:none;padding:13px;border-radius:12px;font-size:14px;font-weight:700" class="btn-wa"><img src="https://mambomascotas.github.io/mambo/LogoWhatsapp.png" alt="" onerror="this.remove()">Enviar datos pendientes por WhatsApp</a>
+    </div>
+    <div id="confirm-paseo" style="background:#fff;border:1.5px solid var(--gray2);border-radius:16px;padding:18px;margin-bottom:20px;text-align:left;font-size:14px;line-height:1.6;color:var(--text)">
+      <div style="font-weight:800;font-size:15px;margin-bottom:10px">Muchas gracias por elegirnos y sumarte al Mambo Team! 😎💕🐶</div>
+      <p style="margin-bottom:10px">☑️ <strong>Antes de cada paseo:</strong> regulá tu arnés Mambo en el pecho y en el cuello, asegurándote de que esté ajustado al cuerpo y no se salga.</p>
+      <p style="margin-bottom:10px">☑️ Paseá siempre con el <strong>arnés</strong>, que tiene el herraje soldado. El collarcito es un accesorio para llevar siempre puesto con su chapita de identificación.</p>
+      <div style="font-weight:800;font-size:16px;text-align:center">Y ahora sí… ¡A PASEAR!!! 🤩🐾😍</div>
     </div>
     <button class="btn-primary" onclick="reiniciar()">🐾 Hacer otro pedido</button>
   </div>
@@ -802,8 +816,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
       <thead><tr><th>Talle</th><th>Pecho (cm)</th><th>Peso aprox.</th></tr></thead>
       <tbody>
         <tr><td><strong>XS</strong></td><td>35 – 45 cm</td><td>hasta 5 kg</td></tr>
-        <tr><td><strong>S</strong></td><td>45 – 55 cm</td><td>5 – 10 kg</td></tr>
-        <tr><td><strong>M</strong></td><td>55 – 65 cm</td><td>10 – 20 kg</td></tr>
+        <tr><td><strong>S</strong></td><td>45 – 60 cm</td><td>5 – 10 kg</td></tr>
+        <tr><td><strong>M</strong></td><td>60 – 70 cm</td><td>10 – 20 kg</td></tr>
         <tr><td><strong>L</strong></td><td>65 – 75 cm</td><td>20 – 35 kg</td></tr>
         <tr><td><strong>XL</strong></td><td>75 – 85 cm</td><td>35 – 50 kg</td></tr>
         <tr><td><strong>XXL</strong></td><td>85 – 100 cm</td><td>más de 50 kg</td></tr>
@@ -1202,25 +1216,24 @@ function renderModal(){
 }
 
 function renderSingle(c,hasMod,hasColor,hasBord,secArn,secAcc){
-  const ident=hasBord?`<div class="m-sec"><div class="m-sec-h"><i>2</i>Identificación<small>Incluida con tu arnés</small></div><div class="fg"><div class="bord-hint">Nombre + hasta 2 teléfonos, y puede llevar <strong>un emoji</strong> o <strong>la foto de tu perri</strong> (o ninguno de los dos). Ej: <strong>LUNA 1123456789 / 1187654321</strong></div>${fotoBloque('m')}<input type="text" id="m-bord" placeholder="ej: LUNA 1123456789 / 1187654321" oninput="this.value=this.value.toUpperCase()" autocomplete="off"><div class="emoji-row" id="m-emojis"></div></div></div>`:'';
+  const ident=hasBord?`<div class="m-sec"><div class="m-sec-h"><i>2</i>Identificación<small>Incluida con tu arnés</small></div><div class="fg"><div class="bord-hint">Nombre + hasta 2 teléfonos, y puede llevar <strong>un emoji</strong> o <strong>la foto de tu perri</strong> (o ninguno). <strong>La foto reemplaza al emoji: no van las dos cosas juntas.</strong> Ej: <strong>LUNA 1123456789 / 1187654321</strong></div>${fotoBloque('m')}<input type="text" id="m-bord" placeholder="ej: LUNA 1123456789 / 1187654321" oninput="this.value=this.value.toUpperCase()" autocomplete="off"><div class="emoji-row" id="m-emojis"></div></div></div>`:'';
   return`${secArn||''}${ident}${hasColor?`<div class="fg"><label>Color</label><input type="text" id="m-color" placeholder="ej: Negro, Rosa, Celeste…"></div>`:''}${secAcc||''}`;
 }
 
 function exIdC(){return precios['Identificación collar']||PRECIOS_DEFAULT['Identificación collar'];}
 function bordOpc(c){
   const e=exIdC();const conArnes=c.id!=='collar';
-  const foto=FOTO_ACTIVA?`<div class="foto-box" style="padding:8px 10px;margin-bottom:8px"><div class="foto-info"><b>¿Querés la carita de tu perri en el collar?</b><span>Subí su foto acá, o mandala por WhatsApp después de comprar.</span><label class="foto-btn">📷 Subir foto del collar<input type="file" accept="image/*" hidden onchange="subirFoto(this,'c')"></label><div class="foto-est" id="foto-est-c"></div></div></div>`:'';
-  return`<div class="fg bord-opc"><label class="chk-idc"><input type="checkbox" id="m-idc" onchange="toggleIdC()"> 🧵 Agregar identificación bordada al collar <b>+${fmt(e.transf)}</b></label>
+  const foto=FOTO_ACTIVA?`<div class="foto-box" style="padding:8px 10px;margin-bottom:8px"><div class="foto-info"><label class="foto-btn">📷 Subir foto del collar<input type="file" accept="image/*" hidden onchange="subirFoto(this,'c')"></label><div class="foto-est" id="foto-est-c"></div></div></div>`:'';
+  return`<div class="fg bord-opc"><label class="chk-idc"><input type="checkbox" id="m-idc" onchange="toggleIdC()"> 🧵 ${conArnes?'Agregar identificación bordada al collar, con los <b>mismos datos y foto/emoji</b> que la del arnés':'Agregar identificación bordada al collar'} <b>+${fmt(e.transf)}</b></label>
     <div id="m-idc-box" style="display:none">
-      ${conArnes?`<label class="chk-idc" style="margin:2px 0 8px;font-weight:700"><input type="checkbox" id="m-idc-igual" onchange="toggleIgual()"> Usar los mismos datos que para el bordado del arnés</label>`:''}
-      <div id="m-idc-datos"><div class="bord-hint">Nombre + hasta 2 teléfonos. Ej: <strong>LUNA 1123456789 / 1187654321</strong></div>${foto}<input type="text" id="m-bordc" placeholder="ej: LUNA 1123456789" oninput="this.value=this.value.toUpperCase()"></div>
-      <div id="m-idc-igual-nota" class="bord-hint" style="display:none">Se borda en el collar lo mismo que escribas en la identificación del arnés (nombre, teléfonos y foto).</div>
+      ${conArnes?`<div id="m-idc-igual-nota" class="bord-hint" style="margin:2px 0 8px">Se borda en el collar lo mismo que escribas en la identificación del arnés (nombre, teléfonos y foto o emoji).</div><label class="chk-idc" style="margin:2px 0 8px;font-weight:700"><input type="checkbox" id="m-idc-otros" onchange="toggleIgual()"> Quiero que la identificación del collar lleve otros datos</label>`:''}
+      <div id="m-idc-datos" style="display:${conArnes?'none':'block'}"><div class="bord-hint">Nombre + hasta 2 teléfonos. Ej: <strong>LUNA 1123456789 / 1187654321</strong></div>${foto}<input type="text" id="m-bordc" placeholder="ej: LUNA 1123456789" oninput="this.value=this.value.toUpperCase()"></div>
     </div></div>`;
 }
 function toggleIgual(){
-  const on=document.getElementById('m-idc-igual')?.checked;
-  const d=document.getElementById('m-idc-datos');if(d)d.style.display=on?'none':'block';
-  const n=document.getElementById('m-idc-igual-nota');if(n)n.style.display=on?'block':'none';
+  const otros=!!document.getElementById('m-idc-otros')?.checked;
+  const d=document.getElementById('m-idc-datos');if(d)d.style.display=otros?'block':'none';
+  const n=document.getElementById('m-idc-igual-nota');if(n)n.style.display=otros?'none':'block';
 }
 function toggleCuello(){
   const c=curProd;if(!c)return;
@@ -1237,7 +1250,7 @@ function toggleCuello(){
 function toggleIdC(){
   const on=document.getElementById('m-idc')?.checked;
   const b=document.getElementById('m-idc-box');if(b)b.style.display=on?'block':'none';
-  if(!on){const g=document.getElementById('m-idc-igual');if(g&&g.checked){g.checked=false;toggleIgual();}}
+  if(!on){const g=document.getElementById('m-idc-otros');if(g&&g.checked){g.checked=false;toggleIgual();}}
   precioModal();
 }
 function precioModal(){
@@ -1288,6 +1301,7 @@ async function subirFoto(inp,slot){
     const r=await fetch(`${SUPA_URL}/storage/v1/object/${FOTO_BUCKET}/${name}`,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'image/jpeg'},body:blob});
     if(!r.ok)throw new Error('upload '+r.status);
     FOTOS_SUBIDAS[slot]=`${SUPA_URL}/storage/v1/object/public/${FOTO_BUCKET}/${name}`;
+    emojiVsFoto(slot);
     est.innerHTML=`✅ Foto subida <img class="foto-th" src="${URL.createObjectURL(blob)}" alt=""> <a href="#" onclick="quitarFoto('${slot}');return false">quitar</a>`;
   }catch(e){est.textContent='No pudimos subir la foto 😕 Mandala por WhatsApp después de comprar.';}
   inp.value='';
@@ -1448,7 +1462,19 @@ function renderEmojis(rowId,inpId){
   const row=document.getElementById(rowId);if(!row)return;
   row.innerHTML=EMOJIS.map(e=>`<button class="emoji-btn" onclick="addEmoji('${inpId}','${e}')">${e}</button>`).join('');
 }
-function addEmoji(id,e){const el=document.getElementById(id);if(el)el.value=(el.value+e).toUpperCase();}
+const _EMO_SLOT={'m-bord':'m','x2-bord1':'x2-1','x2-bord2':'x2-2'};
+const _EMO_RE=/[\p{Extended_Pictographic}\uFE0F\u200D]/gu;
+function addEmoji(id,e){
+  const el=document.getElementById(id);if(!el)return;
+  const sl=_EMO_SLOT[id];
+  if(sl&&FOTOS_SUBIDAS[sl]){quitarFoto(sl);toast('Sacamos la foto: va el emoji o la foto, no los dos');}
+  el.value=(el.value+e).toUpperCase();
+}
+function emojiVsFoto(slot){
+  const id=Object.keys(_EMO_SLOT).find(k=>_EMO_SLOT[k]===slot);if(!id)return;
+  const el=document.getElementById(id);if(el&&_EMO_RE.test(el.value)){el.value=el.value.replace(_EMO_RE,'').trim();toast('La foto reemplaza al emoji: sacamos el emoji');}
+  _EMO_RE.lastIndex=0;
+}
 function onMLargo(){
   const largo=document.getElementById('m-largo')?.value||'1.20mt';
   const p=getP(curProd,largo);
@@ -1488,7 +1514,7 @@ function agregarCarrito(){
     const cuello=cuelloOn?(document.getElementById('m-cuello')?.value||'').trim().slice(0,6):'';
     let bord=document.getElementById('m-bord')?.value||'';
     const idc=!!document.getElementById('m-idc')?.checked;
-    const igual=idc&&!!document.getElementById('m-idc-igual')?.checked;
+    const igual=idc&&c.id!=='collar'&&!document.getElementById('m-idc-otros')?.checked;
     const bc=idc?(igual?(document.getElementById('m-bord')?.value||''):(document.getElementById('m-bordc')?.value||'')).trim():'';
     if(idc&&!bc){const ii=document.getElementById(igual?'m-bord':'m-bordc');if(ii){ii.classList.add('err');ii.style.borderColor='#dc2626';ii.style.background='#fef2f2';ii.scrollIntoView({block:'center'});ii.focus();ii.addEventListener('input',()=>{ii.classList.remove('err');ii.style.borderColor='';ii.style.background='';},{once:true});}toast(igual?'⚠️ Completá primero la identificación del arnés para copiarla al collar':'⚠️ Hay campos sin completar: escribí el nombre para la identificación',4000);return;}
     if(c.id==='collar')bord=bc;
@@ -1525,6 +1551,33 @@ function itemThumb(i){
   f=f||FOTOS_COMBOS[i.prodId]||'';
   return f?`<img src="${BASE_URL}${f}" alt="${String(i.modelo||'').replace(/[<>"`]/g,'')}">`:i.emoji;
 }
+// ── EDITAR ÍTEM DEL CARRITO ──
+let editCartId=null;
+const _esc=s=>String(s||'').replace(/[<>"`&]/g,'');
+function editarItem(id){editCartId=(editCartId===id?null:id);refrescarCarritoUI();}
+function refrescarCarritoUI(){renderCarrito();if(document.getElementById('drw').classList.contains('open'))renderDrawer();}
+function edHtml(i,cx){
+  if(editCartId!==i.id)return`<button class="it-edit" onclick="editarItem('${i.id}')">✏️ Editar</button>`;
+  const ar=!!i.conArnes;
+  return`<div class="it-editor">
+    ${ar?`<div><label>Talle</label><select id="ed-t-${cx}"><option value="">A confirmar (por WhatsApp)</option>${['XS','S','M','L','XL','XXL'].map(t=>`<option value="${t}"${i.talle===t?' selected':''}>${t}</option>`).join('')}</select></div>
+    <div><label>Contorno de pecho (cm)</label><input id="ed-p-${cx}" type="number" inputmode="decimal" min="20" max="120" value="${_esc(i.pecho)}" placeholder="opcional"></div>
+    <div><label>Identificación (nombre y teléfonos)</label><input id="ed-b-${cx}" type="text" value="${_esc(i.bordado)}" oninput="this.value=this.value.toUpperCase()" autocomplete="off"></div>`:''}
+    ${i.bordadoCollar?`<div><label>Identificación del collar</label><input id="ed-bc-${cx}" type="text" value="${_esc(i.bordadoCollar)}" oninput="this.value=this.value.toUpperCase()" autocomplete="off"></div>`:''}
+    ${!ar&&!i.bordadoCollar?'<div style="font-size:12px;color:var(--gray3)">Para cambiar este producto, quitalo y agregalo de nuevo.</div>':''}
+    <div class="it-btns"><button class="it-no" onclick="editarItem('${i.id}')">Cancelar</button>${ar||i.bordadoCollar?`<button class="it-ok" onclick="guardarItem('${i.id}','${cx}')">Guardar</button>`:''}</div>
+  </div>`;
+}
+function guardarItem(id,cx){
+  const i=carrito.find(x=>x.id===id);if(!i)return;
+  const v=k=>{const e=document.getElementById(k+'-'+cx);return e?e.value:null;};
+  const t=v('ed-t'),p=v('ed-p'),b=v('ed-b'),bc=v('ed-bc');
+  if(t!==null)i.talle=t;
+  if(p!==null)i.pecho=p.trim();
+  if(b!==null)i.bordado=b.trim().slice(0,60);
+  if(bc!==null)i.bordadoCollar=bc.trim().slice(0,60);
+  editCartId=null;updateUI();refrescarCarritoUI();toast('✓ Cambios guardados');
+}
 function renderDrawer(){
   const body=document.getElementById('drw-body'),foot=document.getElementById('drw-foot');
   if(!carrito.length){
@@ -1538,6 +1591,7 @@ function renderDrawer(){
       <div class="drw-name">${i.foto?'📷 ':''}${i.bordado?`<strong>${i.bordado}</strong> · `:''}${i.nombre}${i.modelo?' — '+i.modelo:''}${i.bordadoCollar?` <small>(collar: <b>${String(i.bordadoCollar).replace(/[<>"`]/g,'')}</b>)</small>`:''}</div>
       <div class="drw-det">${detItem(i)}</div>
       <div class="drw-price">${fmt(i.precio)}</div>
+      ${edHtml(i,'d')}
     </div>
     <button class="drw-x" onclick="removeItem('${i.id}')" aria-label="Quitar">✕</button>
   </div>`).join('');
@@ -1548,7 +1602,9 @@ function renderDrawer(){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarDrawer();cerrarModalBtn();}});
 
+function persistCarrito(){if(!window._cartReady)return;try{if(carrito.length)localStorage.setItem('mambo_cart',JSON.stringify({c:carrito,t:Date.now()}));else localStorage.removeItem('mambo_cart');}catch(e){}}
 function updateUI(){
+  persistCarrito();
   const n=carrito.length;const sub=carrito.reduce((s,i)=>s+i.precio,0);
   document.getElementById('cart-badge').textContent=n;
   document.getElementById('fab-label').textContent=`${n} item${n!==1?'s':''}`;
@@ -1576,6 +1632,7 @@ function renderCarrito(){
     <div class="cart-item-info">
       <div class="cart-item-name">${i.bordado?`<strong>${i.bordado}</strong> · `:''}${i.nombre}${i.modelo?' — '+i.modelo:''}${i.bordadoCollar?` <small>(collar: <b>${String(i.bordadoCollar).replace(/[<>"`]/g,'')}</b>)</small>`:''}</div>
       <div class="cart-item-detail">${detItem(i)}</div>
+      ${edHtml(i,'c')}
     </div>
     <div class="cart-item-price">${fmt(i.precio)}</div>
     <button class="cart-item-remove" onclick="removeItem('${i.id}')">✕</button>
@@ -1741,7 +1798,7 @@ function setMetodo(m){metodoPago=m;renderMetodos();}
 function renderMetodos(){
   const box=document.getElementById('pago-metodos'),tb=document.getElementById('pago-transf-box'),nt=document.getElementById('pago-notice'),btn=document.getElementById('btn-confirmar');
   if(!box)return;
-  if(!mpDisponible()){box.style.display='none';tb.style.display='';if(nt)nt.style.display='';btn.textContent='✅ Confirmar pedido y finalizar compra';return;}
+  if(!mpDisponible()){const _pl0=document.getElementById('pago-total-lbl');if(_pl0)_pl0.textContent='Total a transferir';box.style.display='none';tb.style.display='';if(nt)nt.style.display='';btn.textContent='✅ Confirmar pedido y finalizar compra';return;}
   const sub=subT(),mp=totalMP();
   box.style.display='block';if(nt)nt.style.display='none';
   box.innerHTML=`<div class="ed-opts">
@@ -1749,6 +1806,7 @@ function renderMetodos(){
     <button type="button" class="ed-opt${metodoPago==='mp'?' on':''}" onclick="setMetodo('mp')"><b><img class="pago-logo" src="${BASE_URL}LogoMercadoPago.png" alt="" onerror="this.remove()">Mercado Pago · ${fmt(mp)} <span style="font-weight:600">(3 cuotas de ${fmt(Math.round(mp/3))})</span></b><span>Tarjeta de crédito o débito${envioCosto>0?' · el envío ('+fmt(envioCosto)+') se transfiere aparte':''}</span></button></div>`;
   tb.style.display=metodoPago==='transf'?'':'none';
   document.getElementById('pago-total').textContent=fmt(metodoPago==='mp'?mp:sub+envioCosto);
+  const _pl=document.getElementById('pago-total-lbl');if(_pl)_pl.textContent=metodoPago==='mp'?'Total a pagar con tarjeta':'Total a transferir';
   btn.textContent=metodoPago==='mp'?'💳 Pagar con Mercado Pago':'✅ Confirmar pedido y finalizar compra';
 }
 
@@ -1908,6 +1966,7 @@ async function confirmarPedido(){
     if(wb){wb.style.display='none';}
     document.getElementById('confirm-alias').textContent=ALIAS;
     document.getElementById('confirm-total-val').textContent=`Total: ${fmt(total)}`;
+    try{localStorage.removeItem('mambo_cart');}catch(e){}
     showView('confirmado');
   }catch(e){console.error(e);toast('No se pudo guardar el pedido ('+String((e&&e.message)||e).slice(0,160)+'). Intentá de nuevo o escribinos por WhatsApp.',9000);btn.textContent=(metodoPago==='mp'&&mpDisponible())?'💳 Pagar con Mercado Pago':'✅ Confirmar pedido y finalizar compra';btn.disabled=false;}
 }
@@ -1925,7 +1984,18 @@ function showView(id){
 }
 function toast(msg,ms){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),ms||2500);}
 
+// ── restaurar carrito guardado en este navegador (hasta 14 días) ──
+(function(){
+  try{
+    const s=JSON.parse(localStorage.getItem('mambo_cart')||'null');
+    if(s&&Array.isArray(s.c)&&Date.now()-(s.t||0)<14*864e5){
+      carrito=s.c.filter(i=>i&&i.id&&i.prodId&&typeof i.precio==='number');
+    }
+  }catch(e){}
+  window._cartReady=true;
+})();
 init();
+try{updateUI();}catch(e){}
 initBanners();
 cargarStock();
 
@@ -1933,10 +2003,12 @@ cargarStock();
 (function(){
   let q;try{q=new URLSearchParams(location.search);}catch(e){return;}
   const r=q.get('mp');if(!r)return;
+  if(r==='ok'||r==='pendiente'){carrito=[];try{localStorage.removeItem('mambo_cart');updateUI();}catch(e){}}
   let lp={};try{lp=JSON.parse(localStorage.getItem('mambo_lastped')||'{}');}catch(e){}
   lastPed=lp;
   const t=document.querySelector('#view-confirmado .confirm-title'),box=document.querySelector('#view-confirmado .confirm-box'),ok=document.getElementById('confirm-comprobante')?.parentElement;
   if(box)box.style.display='none';if(ok)ok.style.display='none';
+  const _ps=document.getElementById('confirm-paseo');if(_ps&&r==='error')_ps.style.display='none';
   const dom=lp.envioCosto>0;
   const msg=r==='ok'?'<strong style="color:var(--text)">¡Recibimos tu pago!</strong> En el día te contactamos por WhatsApp para confirmar talle y coordinar el envío.':r==='pendiente'?'Tu pago está <strong style="color:var(--text)">pendiente de acreditación</strong>. Apenas se acredite, te contactamos por WhatsApp.':'<strong style="color:var(--text)">No se pudo completar el pago.</strong> Tu pedido quedó guardado: escribinos por WhatsApp y lo resolvemos.';
   if(t)t.innerHTML=r==='error'?'Pago<br>no completado':'¡Gracias por<br>tu compra!';
