@@ -796,7 +796,7 @@ hr{border:none;border-top:1px solid var(--gray2);margin:12px 0}
       </div>
       <div class="fg" id="mw">
         <label>Modelo / Color</label>
-        <input id="i-mod" type="text" placeholder="ej: Rambo Azul, Rainbow…" autocomplete="off">
+        <input id="i-mod" type="text" placeholder="ej: Rambo Azul, Rainbow…" autocomplete="off" oninput="renderMG();if(!window._ccorrManual)refreshCcorr()">
         <div class="mg" id="mg"></div>
       </div>
       <!-- Color field (for collar/correa - no arnés model) -->
@@ -1290,7 +1290,7 @@ async function procesarShopNuevos(){
   _procShop=true;_procShopT=Date.now();
   try{
     pend.sort((a,b)=>pedCreado(a)-pedCreado(b));
-    let sig=pedidos.reduce((m,p)=>(p.num<1e12&&p.num>m?p.num:m),0)+1;
+    let sig=proxNum();
     const usados=[];
     for(const p of pend){
       const r=await fetch(`${SUPA_URL}/rest/v1/pedidos?select=data&id=eq.${encodeURIComponent(p.id)}`,{headers:supaHeaders});
@@ -1874,7 +1874,7 @@ function pedidoBlock(p, compact=false){
     <div>
       <span style="font-size:11px;font-weight:700;color:var(--gray3)">TOTAL PEDIDO</span>
       ${mpPending?`<span style="font-size:10px;font-weight:800;color:var(--orange);margin-left:6px">💳 MP pendiente de acreditar</span>`:''}
-      ${p.pago==='mercadopago'&&p.mpRecibido?`<span style="font-size:10px;font-weight:800;color:var(--green);margin-left:6px">💳 MP acreditado</span>`:''}
+      ${p.pago==='mercadopago'&&p.mpRecibido?`<span style="font-size:10px;font-weight:800;color:var(--green);margin-left:6px">💳 MP acreditado${p.mpComision?` · pagó ${fmt(p.mpBruto||0)}, comisión −${fmt(p.mpComision)}`:''}</span>`:''}
     </div>
     <span style="font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--black)">${fmt(p.totalCobrado||0)}</span>
   </div>`;
@@ -2128,7 +2128,7 @@ function rTabla(){
               const envColor = esCorreo ? (p.rotuloHecho ? 'var(--pink-dark)' : '#111') : '#111';
               const btnBase  = 'display:block;margin:4px auto 0;border-radius:7px;padding:3px 7px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;';
               const rotBtn = esCorreo ? `<button onclick="toggleRotulo('${p.id}')" title="Marcar si el rótulo ya está hecho" style="${btnBase}${p.rotuloHecho?'background:var(--pink-dark);color:#fff;border:1.5px solid var(--pink-dark)':'background:#fde047;color:#713f12;border:1.5px solid #eab308'}">${p.rotuloHecho?'✓ Rótulo hecho':'Rótulo pendiente'}</button>` : '';
-              const abBtn = esDomic ? `<button onclick="toggleEnvioAbonado('${p.id}')" title="Marcar si el envío ya fue abonado" style="${btnBase}${p.envioAbonado?'background:var(--green);color:#fff;border:1.5px solid var(--green)':'background:#fde047;color:#713f12;border:1.5px solid #eab308'}">${p.envioAbonado?'✓ Envío pagado':'Envío abonado'}</button>` : '';
+              const abBtn = esDomic ? `<button onclick="toggleEnvioAbonado('${p.id}')" title="Click para marcar el envío como abonado (o volver a pendiente)" style="${btnBase}${p.envioAbonado?'background:var(--green);color:#fff;border:1.5px solid var(--green)':'background:#fde047;color:#713f12;border:1.5px solid #eab308'}">${p.envioAbonado?'✓ Envío abonado':'Envío pendiente'}</button>` : '';
               html += `<td rowspan="${nItems}" style="background:${rowBg};${borderTop};vertical-align:middle;text-align:center;font-size:11px;font-weight:700;border-left:1px solid #e5e7eb;color:${envColor}">${envio}${rotBtn}${abBtn}</td>`;
               html += `<td rowspan="${nItems}" style="background:${rowBg};${borderTop};vertical-align:middle;border-left:1px solid #e5e7eb">
                 <button onclick="editarPedidoTabla('${p.id}')" style="background:var(--blue-bg);color:var(--blue);border:1.5px solid var(--blue);border-radius:7px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer;display:block;margin-bottom:4px">✏️</button>
@@ -2829,16 +2829,8 @@ function openNuevo(){
   // Default date = today
   document.getElementById('f-fecha').value=new Date().toISOString().slice(0,10);
   resetItemForm();
-  // Auto numero: reset to 1 if new month, otherwise max+1
-  const today = new Date().toISOString().slice(0,7); // YYYY-MM
-  const pedidosDelMes = pedidos.filter(p => p.fecha && p.fecha.startsWith(today));
-  let next;
-  if(pedidosDelMes.length === 0){
-    // No pedidos this month → start at 1
-    next = 1;
-  } else {
-    next = Math.max(...pedidos.map(p=>p.num)) + 1;
-  }
+  // Auto número: continúa desde el pedido más reciente por fecha (si cargás un 1 con fecha posterior, sigue 2, 3, 4…)
+  const next=proxNum();
   document.getElementById('f-num').value=next;
   renderIL();calcPago();
   openOv('ov-form');
@@ -3044,12 +3036,22 @@ function populateLargoSelect(tipo){
 
 function renderCx2Grid(n){
   const cur=document.getElementById(`cx2-mod${n}`).value;
-  document.getElementById(`cx2-mg${n}`).innerHTML=MODELOS.map(m=>`<div class="mo${m===cur?' on':''}" onclick="selCx2Mod(${n},'${m}')">${m}</div>`).join('');
+  document.getElementById(`cx2-mg${n}`).innerHTML=modFilt(cur).map(m=>`<div class="mo${m===cur?' on':''}" onclick="selCx2Mod(${n},'${m}')">${m}</div>`).join('');
 }
 
-function selCx2Mod(n,m){
+function selCx2Mod(n,m){window._modPick=m;
   document.getElementById(`cx2-mod${n}`).value=m;
   renderCx2Grid(n);
+}
+function modFilt(cur){
+  const nz=s=>(s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const q=nz(cur);if(!q||window._modPick===cur)return MODELOS;
+  return MODELOS.filter(m=>nz(m).includes(q));
+}
+function modGridHtml(cur,fnSel){
+  const l=modFilt(cur);
+  if(!l.length)return '<div style="grid-column:1/-1;font-size:12px;color:var(--gray3);padding:6px 2px">Sin coincidencias — se usará "'+String(cur).replace(/[<>&"]/g,'')+'" tal cual.</div>';
+  return l.map(m=>`<div class="mo${m===cur?' on':''}" onclick="${fnSel}('${m}')">${m}</div>`).join('');
 }
 function renderMG(){
   const t=document.getElementById('i-tipo').value;
@@ -3057,7 +3059,7 @@ function renderMG(){
   document.getElementById('mw').style.display=show?'block':'none';
   if(!show)return;
   const cur=document.getElementById('i-mod').value;
-  document.getElementById('mg').innerHTML=MODELOS.map(m=>`<div class="mo${m===cur?' on':''}" onclick="selMod('${m}')">${m}</div>`).join('');
+  document.getElementById('mg').innerHTML=modGridHtml(cur,'selMod');
 }
 function refreshCcorr(){
   const sel=document.getElementById('i-ccorr');if(!sel)return;
@@ -3066,7 +3068,7 @@ function refreshCcorr(){
   if(!window._ccorrManual)sel.value=def;
   sel.style.borderColor=sel.value?'':'#fbbf24';
 }
-function selMod(m){document.getElementById('i-mod').value=m;renderMG();if(!window._ccorrManual)refreshCcorr();}
+function selMod(m){window._modPick=m;document.getElementById('i-mod').value=m;renderMG();if(!window._ccorrManual)refreshCcorr();}
 
 // ══════════ FALTANTES ══════════
 const FALT_ITEMS = {
@@ -3865,10 +3867,10 @@ function cx2aCalcPrecios(){
 
 function renderCx2aGrid(n){
   const cur=document.getElementById(`cx2a-mod${n}`).value;
-  document.getElementById(`cx2a-mg${n}`).innerHTML=MODELOS.map(m=>`<div class="mo${m===cur?' on':''}" onclick="selCx2aMod(${n},'${m}')">${m}</div>`).join('');
+  document.getElementById(`cx2a-mg${n}`).innerHTML=modFilt(cur).map(m=>`<div class="mo${m===cur?' on':''}" onclick="selCx2aMod(${n},'${m}')">${m}</div>`).join('');
 }
 
-function selCx2aMod(n,m){
+function selCx2aMod(n,m){window._modPick=m;
   document.getElementById(`cx2a-mod${n}`).value=m;
   renderCx2aGrid(n);
 }
@@ -4252,6 +4254,35 @@ function calcPago(){
 }
 
 // ══════════ SAVE ══════════
+// próximo número de pedido: el del pedido más reciente (por fecha, y a igual fecha por orden de carga) + 1
+function proxNum(){
+  let best=null,bk=null;
+  pedidos.forEach(p=>{
+    if(esRepo(p)||!(p.num>0)||p.num>1e12)return;
+    const k=[Date.parse(p.fecha)||0,pedCreado(p)];
+    if(!best||k[0]>bk[0]||(k[0]===bk[0]&&k[1]>=bk[1])){best=p;bk=k;}
+  });
+  return best?best.num+1:1;
+}
+// al editar un pedido: si un ítem que salió de stock cambia de modelo/talle/cantidad, devuelve el stock viejo y toma el nuevo (si hay); si no hay, pasa a producción y consume insumos
+function reconciliarStockEdicion(viejos,nuevos){
+  let tocoStock=false;const msgs=[];
+  nuevos.forEach(n=>{
+    const o=(viejos||[]).find(x=>x.id===n.id);
+    if(!o||!o.desdeStock)return;
+    const cOld=o.cant||1,cNew=n.cant||1;
+    if(o.modelo===n.modelo&&o.talle===n.talle&&cOld===cNew&&tieneArnes(n.tipo)){n.desdeStock=true;return;}
+    if(o.modelo&&o.talle){if(!stockData[o.modelo])stockData[o.modelo]={};stockData[o.modelo][o.talle]=(stockData[o.modelo][o.talle]||0)+cOld;tocoStock=true;}
+    if(tieneArnes(n.tipo)&&n.modelo&&n.talle&&((stockData[n.modelo]||{})[n.talle]||0)>=cNew){
+      stockData[n.modelo][n.talle]-=cNew;n.desdeStock=true;msgs.push('📦 '+n.modelo+' '+n.talle+' tomado del stock');
+    }else{
+      n.desdeStock=false;if(n.estadoItem==='shop'||n.estadoItem==='listo')n.estadoItem='nuevo';
+      msgs.push('⚠️ '+(n.modelo||'')+' '+(n.talle||'')+' sin stock: pasa a producción');
+    }
+  });
+  if(tocoStock){try{saveStock();}catch(e){}}
+  if(msgs.length)setTimeout(()=>toast(msgs.join(' · '),5000),400);
+}
 function savePedido(){
   const cli=document.getElementById('f-cli').value.trim();
   if(!cli){toast('Ingresá el cliente o Instagram 📲');return;}
@@ -4265,7 +4296,7 @@ function savePedido(){
     ? mpRecibido + env   // acreditado MP + envio cobrado aparte
     : sub + env;         // transferencia/efectivo: total completo
   const neto=totalCobrado;
-  const num=parseInt(document.getElementById('f-num').value)||(pedidos.length?Math.max(...pedidos.map(p=>p.num))+1:1);
+  const num=parseInt(document.getElementById('f-num').value)||proxNum();
 
   const fechaVal=document.getElementById('f-fecha').value||new Date().toISOString().slice(0,10);
 
@@ -4275,6 +4306,7 @@ function savePedido(){
     pushHistory();
     const idx=pedidos.findIndex(p=>p.id===editId);
     if(idx>-1){
+      reconciliarStockEdicion(pedidos[idx].items,tempItems);
       pedidos[idx]={...pedidos[idx],num,cliente:cli,provincia,items:JSON.parse(JSON.stringify(tempItems)),pago,mpRecibido:pago==='mercadopago'?mpRecibido:0,linkTotal,envio:document.getElementById('f-env').value,envioCosto:env,notas:document.getElementById('f-notas').value.trim(),totalCobrado,netoMambo:neto,fecha:fechaVal+'T12:00:00.000Z'};
       toast('Pedido #'+num+' actualizado ✅');
     }
@@ -4435,9 +4467,10 @@ async function syncPagos(){
     let cambio=false;
     rows.forEach(({data:d})=>{
       const l=pedidos.find(x=>x.id===d.id);if(!l)return;
-      if(d.mpPaymentId&&(d.pagoEstado!==l.pagoEstado||d.mpPaymentId!==l.mpPaymentId||d.notas!==l.notas)){
+      if(d.mpPaymentId&&(d.pagoEstado!==l.pagoEstado||d.mpPaymentId!==l.mpPaymentId||d.notas!==l.notas||d.mpRecibido!==l.mpRecibido)){
         const nuevoAprob=d.pagoEstado==='aprobado'&&l.pagoEstado!=='aprobado';
         Object.assign(l,limpiar({pago:d.pago,pagoEstado:d.pagoEstado,pagoMP:d.pagoMP,mpPaymentId:d.mpPaymentId,notas:d.notas}));
+        if(d.mpRecibido>0){l.mpRecibido=d.mpRecibido;l.mpBruto=d.mpBruto;l.mpComision=d.mpComision;l.totalCobrado=d.totalCobrado;}
         cambio=true;if(nuevoAprob)toast('💳 Pago aprobado · pedido #'+l.num);
       }
     });

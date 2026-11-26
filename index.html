@@ -671,7 +671,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
     <div id="cart-bottom" style="display:none">
       <div class="divider"></div>
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray3);margin-bottom:10px">Tipo de envío</div>
-      <div class="envio-opt on" onclick="selEnvio('sucursal',0,this)"><div class="envio-opt-icon">📦</div><div class="envio-opt-info"><div class="envio-opt-name">Envío gratis a sucursal <span class="fl-ar" role="img" aria-label="Argentina"></span><span class="envio-free">GRATIS</span></div><div class="envio-opt-desc">Correo Argentino — llegamos a todo el país</div></div><img class="envio-logo" src="https://mambomascotas.github.io/mambo/LogoCorreoArgentino.png" alt="Correo Argentino" onerror="this.remove()"><div class="envio-price">$0</div></div>
+      <div class="envio-opt on" id="envio-suc" onclick="selEnvio('sucursal',envioSucCosto(),this)"><div class="envio-opt-icon">📦</div><div class="envio-opt-info"><div class="envio-opt-name"><span id="envio-suc-nom">Envío gratis a sucursal</span> <span class="fl-ar" role="img" aria-label="Argentina"></span><span class="envio-free" id="envio-suc-free">GRATIS</span></div><div class="envio-opt-desc" id="envio-suc-desc">Correo Argentino — llegamos a todo el país</div></div><img class="envio-logo" src="https://mambomascotas.github.io/mambo/LogoCorreoArgentino.png" alt="Correo Argentino" onerror="this.remove()"><div class="envio-price" id="envio-suc-precio">$0</div></div>
       <div class="envio-opt" onclick="selEnvio('domicilio',envioDom(),this)"><div class="envio-opt-icon">🏠</div><div class="envio-opt-info"><div class="envio-opt-name">Envío a domicilio <span class="fl-ar" role="img" aria-label="Argentina"></span></div><div class="envio-opt-desc">Correo Argentino — llegamos a tu casa en todo el país</div></div><img class="envio-logo" src="https://mambomascotas.github.io/mambo/LogoCorreoArgentino.png" alt="Correo Argentino" onerror="this.remove()"><div class="envio-price" id="envio-dom-precio">+$7.000</div></div>
       <div class="envio-opt" onclick="selEnvio('urquiza',0,this)"><div class="envio-opt-icon">📍</div><div class="envio-opt-info"><div class="envio-opt-name">Retiro en Urquiza<span class="envio-free">GRATIS</span></div><div class="envio-opt-desc">CABA — coordinar por WhatsApp</div></div><div class="envio-price">$0</div></div>
       <div class="envio-opt" onclick="selEnvio('moto',0,this)"><div class="envio-opt-icon">🏍️</div><div class="envio-opt-info"><div class="envio-opt-name">Motito CABA</div><div class="envio-opt-desc">Costo aparte — lo coordinamos por WhatsApp</div></div><div class="envio-price">A coordinar</div></div>
@@ -1596,7 +1596,7 @@ function renderDrawer(){
     <button class="drw-x" onclick="removeItem('${i.id}')" aria-label="Quitar">✕</button>
   </div>`).join('');
   foot.innerHTML=`<div class="drw-sub"><span>Subtotal</span><span>${fmt(sub)}</span></div>
-    <div class="drw-note">El envío se elige en el siguiente paso. Gratis a sucursal de Correo Argentino.</div>
+    <div class="drw-note">${tieneCombo()?'El envío se elige en el siguiente paso. Gratis a sucursal de Correo Argentino.':'El envío se elige en el siguiente paso. <b>El envío gratis es solo para arneses y combos.</b>'}</div>
     <button class="btn-primary" onclick="irAFinalizar()">Finalizar compra</button>
     <button class="btn-secondary" onclick="cerrarDrawer()">Seguir comprando</button>`;
 }
@@ -1641,16 +1641,36 @@ function renderCarrito(){
 }
 
 function renderTotal(){
+  try{actualizarEnvioSuc();}catch(e){}
   const sub=subRaw(),dsc=descTransf();const total=sub-dsc+envioCosto;
   const dr=document.getElementById('desc-row');if(dr){dr.style.display=dsc>0?'flex':'none';document.getElementById('desc-lbl').textContent='Código '+(cupon?cupon.codigo:'')+(cupon&&!cupon.fijoT?' (−'+cupon.pct+'%)':'');
   if(cupon&&carrito.length&&!carrito.some(cupMatch))cuponUI(false,'⚠️ El código es válido, pero tu carrito no incluye productos de esta promo: '+cuponDesc()+'.');else if(cupon)cuponUI(true,'✅ Código aplicado: '+cuponDesc()+'.');document.getElementById('desc-val').textContent='−'+fmt(dsc);}
   document.getElementById('subtotal-val').textContent=fmt(sub);
-  document.getElementById('envio-val').textContent=envioCosto>0?fmt(envioCosto):(envioTipo==='moto'||envioTipo==='motogba'?'A coordinar':'Gratis');
+  document.getElementById('envio-val').textContent=envioValTxt();
   document.getElementById('total-val').textContent=fmt(total);
   document.getElementById('fab-price').textContent=fmt(total);
 }
 
 function envioDom(){return +((precios['Envío a domicilio']||{}).transf)||7000;}
+// El envío gratis a sucursal es solo para pedidos con al menos un arnés o combo
+function tieneCombo(){return carrito.some(i=>/^(Arnés|Combo)/.test(i.tipo||'')||i.conArnes);}
+function envioSuc(){return +((precios['Envío a sucursal']||{}).transf)||0;}   // si algún día cargás ese precio en la tabla, se cobra; si no, se coordina por WhatsApp
+function envioSucCosto(){return tieneCombo()?0:envioSuc();}
+function envioSucAparte(){return envioTipo==='sucursal'&&!tieneCombo()&&envioSuc()===0;}
+function actualizarEnvioSuc(){
+  const g=tieneCombo(),c=envioSuc();
+  const set=(id,t,h)=>{const e=document.getElementById(id);if(e){if(h)e.innerHTML=t;else e.textContent=t;}};
+  set('envio-suc-nom',g?'Envío gratis a sucursal':'Envío a sucursal');
+  const f=document.getElementById('envio-suc-free');if(f)f.style.display=g?'':'none';
+  set('envio-suc-desc',g?'Correo Argentino — llegamos a todo el país':'Correo Argentino — el envío gratis es solo para arneses y combos. '+(c>0?'':'Te pasamos el costo por WhatsApp.'));
+  set('envio-suc-precio',g?'$0':(c>0?'+'+fmt(c):'A coordinar'));
+  if(envioTipo==='sucursal')envioCosto=g?0:c;
+}
+function envioValTxt(){
+  if(envioCosto>0)return fmt(envioCosto);
+  if(envioTipo==='moto'||envioTipo==='motogba'||envioSucAparte())return 'A coordinar';
+  return 'Gratis';
+}
 function selEnvio(tipo,costo,el){
   envioTipo=tipo;envioCosto=costo;
   document.querySelectorAll('.envio-opt').forEach(e=>e.classList.remove('on'));
@@ -1737,7 +1757,7 @@ function irAPago(){
   document.getElementById('pago-resumen-items').innerHTML=
     carrito.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${i.bordado?String(i.bordado).replace(/[<>"`]/g,'')+' · ':''}${i.nombre}${i.modelo?' — '+i.modelo:''}</span><span style="font-weight:700">${fmt(i.precio)}</span></div>`).join('')+
     (descTransf()>0?`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;color:#15803d;font-weight:700"><span>Código ${cupon.codigo}${cupon.fijoT?'':' (−'+cupon.pct+'%)'}</span><span>−${fmt(descTransf())}</span></div>`:'')+
-    `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray3)"><span>Envío — ${eL[envioTipo]||envioTipo}</span><span>${envioCosto>0?fmt(envioCosto):'Gratis'}</span></div>`;
+    `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray3)"><span>Envío — ${eL[envioTipo]||envioTipo}</span><span>${envioValTxt()}</span></div>`;
   document.getElementById('pago-total').textContent=fmt(total);
   document.getElementById('alias-show').textContent=ALIAS;
   metodoPago='transf';renderMetodos();
@@ -1814,6 +1834,7 @@ const ENVIO_GESTION={sucursal:'Correo Arg Sucursal',domicilio:'Correo Arg Domici
 function notasPedido(){
   const l=['Pedido desde la web'];
   if(cupon)l.push('🏷️ CÓDIGO '+cupon.codigo+' ('+cuponDesc()+')'+(descTransf()>0?' −'+fmt(descTransf())+' en el total por transferencia':''));
+  if(envioSucAparte())l.push('📦 Envío a sucursal NO incluido (sin arnés ni combo): coordinar y cobrar el envío aparte');
   if(envioTipo==='sucursal'||envioTipo==='domicilio'){const d=datosEnvioTxt();l.push(d?'Datos de envío: '+d:'Datos de envío: los manda por WhatsApp');}
   if(carrito.some(i=>i.conArnes&&!i.talle))l.push('Talle a confirmar por WhatsApp');
   if(carrito.some(i=>i.foto))l.push('📷 Subió foto del perro para el bordado');
@@ -1952,7 +1973,7 @@ async function confirmarPedido(){
   try{
     const resp=await fetch(`${SUPA_URL}/rest/v1/pedidos`,{method:'POST',headers:{...SUPA_H,'Prefer':'return=minimal'},body:JSON.stringify({id:pedido.id,data:pedido})});
     if(!resp.ok){let t='';try{t=(await resp.text()).slice(0,140);}catch(_){}console.error('pedido',resp.status,t);throw new Error('HTTP '+resp.status+(t?' · '+t:''));}
-    lastPed={nombre:n,prov:prov,envio:envioTipo,modo:envioModo,envioCosto,total,pend:pendItems(carrito)};
+    lastPed={nombre:n,prov:prov,envio:envioTipo,modo:envioModo,envioCosto,total,aparte:envioSucAparte(),pend:pendItems(carrito)};
     if(metodoPago==='mp'&&mpDisponible()){
       try{localStorage.setItem('mambo_lastped',JSON.stringify(lastPed));}catch(e){}
       btn.textContent='Abriendo Mercado Pago…';
@@ -1966,6 +1987,7 @@ async function confirmarPedido(){
     if(wb){wb.style.display='none';}
     document.getElementById('confirm-alias').textContent=ALIAS;
     document.getElementById('confirm-total-val').textContent=`Total: ${fmt(total)}`;
+    if(lastPed.aparte){const pp=document.querySelector('#view-confirmado .confirm-page > p');if(pp)pp.innerHTML+='<br><br>📦 Tu pedido no incluye envío gratis (es solo para arneses y combos): te escribimos por WhatsApp con el costo del envío a sucursal.';}
     try{localStorage.removeItem('mambo_cart');}catch(e){}
     showView('confirmado');
   }catch(e){console.error(e);toast('No se pudo guardar el pedido ('+String((e&&e.message)||e).slice(0,160)+'). Intentá de nuevo o escribinos por WhatsApp.',9000);btn.textContent=(metodoPago==='mp'&&mpDisponible())?'💳 Pagar con Mercado Pago':'✅ Confirmar pedido y finalizar compra';btn.disabled=false;}
@@ -2013,6 +2035,7 @@ cargarStock();
   const msg=r==='ok'?'<strong style="color:var(--text)">¡Recibimos tu pago!</strong> En el día te contactamos por WhatsApp para confirmar talle y coordinar el envío.':r==='pendiente'?'Tu pago está <strong style="color:var(--text)">pendiente de acreditación</strong>. Apenas se acredite, te contactamos por WhatsApp.':'<strong style="color:var(--text)">No se pudo completar el pago.</strong> Tu pedido quedó guardado: escribinos por WhatsApp y lo resolvemos.';
   if(t)t.innerHTML=r==='error'?'Pago<br>no completado':'¡Gracias por<br>tu compra!';
   const pp=document.querySelector('#view-confirmado .confirm-page > p');if(pp)pp.innerHTML=msg+(dom&&r!=='error'?'<br><br>🏠 El envío a domicilio ('+fmt(lp.envioCosto)+') se transfiere aparte al alias <strong style="color:var(--text)">'+ALIAS+'</strong> (a nombre de Mariano Nahuel Arbotto).':'');
+  if(lp.aparte&&r!=='error'&&pp)pp.innerHTML+='<br><br>📦 Tu pedido no incluye envío gratis (es solo para arneses y combos): te escribimos por WhatsApp con el costo del envío a sucursal.';
   const wb=document.getElementById('confirm-envio');
   if(wb&&r!=='error'&&pendLista(lp).length){wb.style.display='block';document.getElementById('confirm-envio-a').href=waDatosEnvio();}
   showView('confirmado');
