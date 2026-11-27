@@ -78,6 +78,7 @@ body{font-family:'Nunito',sans-serif;background:#fdf2f8;color:var(--text);font-s
 .fg{margin-bottom:12px}
 label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gray3);margin-bottom:4px}
 input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray2);border-radius:9px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;background:var(--gray);color:var(--text);transition:border-color .2s,background .2s;-webkit-appearance:none;appearance:none}
+input[type="checkbox"],input[type="radio"]{-webkit-appearance:auto;appearance:auto;width:auto;padding:0;background:transparent;border:none;accent-color:var(--pink-dark)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pink-dark);background:#fff}
 textarea{resize:vertical;min-height:55px}
 .fr2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -1829,7 +1830,7 @@ function pedidoBlock(p, compact=false){
     const swapLabels={cinturon:'cambia correa por cinturón auto',collar:'cambia correa por collar'};
     const esCorrea=item.tipo==='Correa';
     const esCollar=item.tipo==='Collar'||item.tipo==='Collar sublimado';
-    const largoExtra=item.largo&&item.largo!=='1.20mt'?(esCorrea?' '+item.largo:esCollar?'':' correa '+item.largo):'';
+    const largoExtra=item.largo&&item.largo!=='1.20mt'?(esCorrea?' '+item.largo:(esCollar||item.tipo==='Arnés'||item.tipo==='Cinturón auto')?'':' correa '+item.largo):'';
     const swapExtra=item.swap?` (${swapLabels[item.swap]||item.swap})`:'';
     const prodLine=`${item.cant>1?item.cant+'× ':''}${item.tipo.replace('Combo 1 — Arnés + Correa','Combo 1').replace('Combo 2 — Arnés + Correa + Collar','Combo 2')}${item.modelo?' — '+item.modelo:''}${largoExtra}${noTalleItem(item)?'':item.talle&&item.talle!=='Sin talle'?' '+item.talle:''}${swapExtra}`;
     const nombreVisible=item.bordado||'—';
@@ -2088,7 +2089,7 @@ function rTabla(){
             const swapLabels = {cinturon:'cambia correa por cinturón auto', collar:'cambia correa por collar'};
             const esCorrea=item.tipo==='Correa';
             const esCollar=item.tipo==='Collar'||item.tipo==='Collar sublimado';
-            const largoExtra=item.largo&&item.largo!=='1.20mt'?(esCorrea?' '+item.largo:esCollar?'':' correa '+item.largo):'';
+            const largoExtra=item.largo&&item.largo!=='1.20mt'?(esCorrea?' '+item.largo:(esCollar||item.tipo==='Arnés'||item.tipo==='Cinturón auto')?'':' correa '+item.largo):'';
             const swapExtra=item.swap?` (${swapLabels[item.swap]||item.swap})`:'';
             const prod = `${item.cant>1?item.cant+'× ':''}${(item.tipo||'').replace('Combo 1 — Arnés + Correa','Combo 1').replace('Combo 2 — Arnés + Correa + Collar','Combo 2')}${item.modelo?' — '+item.modelo:''}${largoExtra}${noTalleItem(item)?'':item.talle&&item.talle!=='Sin talle'?' '+item.talle:''}${swapExtra}`;
             const td = (content, extra='') => `<td style="background:${rowBg};${first?borderTop:''};${extra}">${content}</td>`;
@@ -3978,7 +3979,8 @@ function addItem(){
   const isCollar=tipo==='Collar'||tipo==='Collar sublimado';
   const isCorrea=tipo==='Correa';
   const color=document.getElementById('i-color').value.trim();
-  const largo=document.getElementById('i-largo').value||'';
+  let largo=document.getElementById('i-largo').value||'';
+  if(tipo==='Arnés'||tipo==='Cinturón auto'||isCollar)largo='';   // estos productos no llevan correa: no arrastrar un largo viejo
   const swap=document.getElementById('i-swap')?.value||'';
   const modeloBase=document.getElementById('i-mod').value.trim();
   const modeloFinal=(isCollar||isCorrea)?color:modeloBase;
@@ -4125,7 +4127,7 @@ function renderIL(){
     const swapLbls={cinturon:'cambia correa por cinturón auto',collar:'cambia correa por collar'};
     const esCorreaI=i.tipo==='Correa';
     const esCollarI=i.tipo==='Collar'||i.tipo==='Collar sublimado';
-    const largoE=i.largo&&i.largo!=='1.20mt'?(esCorreaI?' '+i.largo:esCollarI?'':' correa '+i.largo):'';
+    const largoE=i.largo&&i.largo!=='1.20mt'?(esCorreaI?' '+i.largo:(esCollarI||i.tipo==='Arnés'||i.tipo==='Cinturón auto')?'':' correa '+i.largo):'';
     const swapE=i.swap?` (${swapLbls[i.swap]||i.swap})`:'';
     const prodL=`${i.cant>1?i.cant+'× ':''}${tipoLabel}${i.modelo?' — '+i.modelo:''}${largoE}${noTalleItem(i)?'':i.talle&&i.talle!=='Sin talle'?' '+i.talle:''}${swapE}`;
     const ex=[];
